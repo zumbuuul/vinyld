@@ -1,0 +1,54 @@
+# See https://help.github.com/articles/ignoring-files/ for more about ignoring files.
+
+# dependencies
+/node_modules
+/.pnp
+.pnp.*
+.yarn/*
+!.yarn/patches
+!.yarn/plugins
+!.yarn/releases
+!.yarn/versions
+/Aplikacija/node_modules
+/Aplikacija/.pnp
+/Aplikacija/.yarn/*
+!/Aplikacija/.yarn/patches
+!/Aplikacija/.yarn/plugins
+!/Aplikacija/.yarn/releases
+!/Aplikacija/.yarn/versions
+
+# testing
+/coverage
+/Aplikacija/coverage
+
+# next.js
+/.next/
+/out/
+/Aplikacija/.next/
+/Aplikacija/out/
+
+# production
+/build
+/Aplikacija/build
+
+# misc
+.DS_Store
+*.pem
+
+
+
+# debug
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.pnpm-debug.log*
+
+# env files (can opt-in for committing if needed)
+.env*
+
+# vercel
+.vercel
+
+# typescript
+*.tsbuildinfo
+next-env.d.ts

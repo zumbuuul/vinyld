@@ -9,10 +9,9 @@ export default async function AuthLayout({
     headers: await headers(),
   });
 
-  if (!session) return <p>NOT SIGNED IN</p>;
-
   return (
     <>
+      {session ? <p>logged in</p> : <p>not logged in</p>}
       <p>hi from layout</p> {children}
     </>
   );

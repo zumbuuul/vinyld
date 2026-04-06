@@ -1,4 +1,4 @@
-"use client";
+import Navbar from "@/app/shared/Navbar";
 
 const imgBeats =
   "https://www.figma.com/api/mcp/asset/8ac54f36-b850-495d-a553-500caf44858e";
@@ -193,46 +193,6 @@ const ActivityCard = ({ activity }: { activity: ActivityItem }) => (
 export default function Home() {
   return (
     <div className="min-h-screen bg-[#131313] text-white font-sans">
-      {/* Navigation */}
-      <nav className="fixed top-0 left-0 right-0 z-50 backdrop-blur-md bg-[rgba(19,19,19,0.7)] flex items-center justify-between px-8 py-4">
-        <div className="flex items-center gap-8">
-          <h1
-            id="logo"
-            className="text-2xl font-serif font-bold italic text-[#ffb59e] tracking-tight"
-          >
-            vinyld
-          </h1>
-          <div className="flex gap-6">
-            <a
-              href="#"
-              className="text-sm font-serif border-b-2 border-[#ffb59e] text-[#ffb59e] pb-1"
-            >
-              Police
-            </a>
-            <a
-              href="#"
-              className="text-sm font-serif text-gray-500 hover:text-white transition"
-            >
-              Ljudi
-            </a>
-            <a
-              href="#"
-              className="text-sm font-serif text-gray-500 hover:text-white transition"
-            >
-              Priče
-            </a>
-          </div>
-        </div>
-        <div className="flex items-center gap-4">
-          <button className="w-9 h-9 rounded-full bg-white/5 hover:bg-white/10 transition flex items-center justify-center">
-            🔍
-          </button>
-          <button className="px-6 py-2 rounded bg-gradient-to-r from-[#ffb59e] to-[#ff5717] text-[#521300] font-serif font-bold text-sm hover:from-[#ffb59e] hover:to-[#ff6b2d] transition">
-            Pridruži se
-          </button>
-        </div>
-      </nav>
-
       {/* Hero Section */}
       <section className="relative min-h-screen flex items-center pt-20 overflow-hidden bg-[#131313]">
         <div

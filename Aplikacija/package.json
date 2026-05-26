@@ -7,7 +7,9 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
-    "db:test": "tsx src/lib/test-db.ts"
+    "db:test": "tsx src/lib/test-db.ts",
+    "db:seed": "tsx src/lib/seed-fake-data.ts",
+    "db:seed:reset": "tsx src/lib/seed-fake-data.ts --reset"
   },
   "dependencies": {
     "@neondatabase/serverless": "^1.0.2",

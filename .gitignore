@@ -35,7 +35,9 @@
 .DS_Store
 *.pem
 
-
+#md
+AGENT.md
+DESIGN.md
 
 # debug
 npm-debug.log*

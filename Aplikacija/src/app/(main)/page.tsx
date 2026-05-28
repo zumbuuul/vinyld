@@ -1,24 +1,13 @@
 import Link from "next/link";
 import { headers } from "next/headers";
 
+import { getIconicPressings, getRecentSpins } from "@/actions/feed.actions";
 import { auth } from "@/lib/auth";
 
 const heroImage =
   "https://www.figma.com/api/mcp/asset/7294e38e-2f4b-4602-a65f-7a21549d2bf8";
 const grainImage =
   "https://www.figma.com/api/mcp/asset/b618309b-96fa-484e-84ba-ac1a6e77eafd";
-const albumOneImage =
-  "https://www.figma.com/api/mcp/asset/051ee437-38f5-4c24-a6f2-3071020ab894";
-const albumTwoImage =
-  "https://www.figma.com/api/mcp/asset/e21870e8-1b96-4541-bdf8-cf9f8e2f9e60";
-const albumThreeImage =
-  "https://www.figma.com/api/mcp/asset/7f81d012-9613-4e81-851f-2a28e6308eff";
-const albumFourImage =
-  "https://www.figma.com/api/mcp/asset/33575c96-78e8-4fb9-bb2a-e1c5bfaa1018";
-const avatarOne =
-  "https://www.figma.com/api/mcp/asset/2de5dc84-4fac-4be4-a711-3f7d989cfc4f";
-const avatarTwo =
-  "https://www.figma.com/api/mcp/asset/b4060a9e-aa2f-4894-923f-8faa7d7bb63b";
 const featureOne =
   "https://www.figma.com/api/mcp/asset/f5f10c62-e8c9-4187-b24d-49db302a566b";
 const featureTwo =
@@ -27,61 +16,6 @@ const featureThree =
   "https://www.figma.com/api/mcp/asset/a51edb71-c313-496a-8203-18ab9ffaf266";
 const featureFour =
   "https://www.figma.com/api/mcp/asset/4119ec21-ebaa-4244-a685-0ca9cc9ecaa7";
-const ctaIcon =
-  "https://www.figma.com/api/mcp/asset/8edca9a8-b753-499f-8d5b-af98a43a6d1b";
-
-const featuredAlbums = [
-  {
-    title: "Dark Side of the Moon",
-    artist: "Pink Floyd",
-    rating: 5,
-    image: albumOneImage,
-  },
-  {
-    title: "Rumours",
-    artist: "Fleetwood Mac",
-    rating: 4,
-    image: albumTwoImage,
-  },
-  {
-    title: "Abbey Road",
-    artist: "The Beatles",
-    rating: 5,
-    image: albumThreeImage,
-  },
-  {
-    title: "Kind of Blue",
-    artist: "Miles Davis",
-    rating: 5,
-    image: albumFourImage,
-  },
-];
-
-const activityItems = [
-  {
-    id: "activity-1",
-    user: "Julian V.",
-    action: 'Added to "Midnight Jazz"',
-    content:
-      '"The pressing quality on this Blue Note reissue is absolutely stellar. Minimal surface noise and incredible dynamic range."',
-    likes: 42,
-    comments: 12,
-    avatar: avatarOne,
-    rating: 0,
-  },
-  {
-    id: "activity-2",
-    user: "Sarah K.",
-    action: 'Reviewed "Pet Sounds"',
-    content:
-      '"A masterpiece that never ages. Every spin reveals a new layer of harmony."',
-    likes: 156,
-    comments: 24,
-    avatar: avatarTwo,
-    rating: 5,
-  },
-];
-
 const features = [
   {
     title: "Log your listening",
@@ -134,6 +68,8 @@ export default async function FeedPage() {
   const session = await auth.api.getSession({
     headers: await headers(),
   });
+  const featuredAlbums = await getIconicPressings();
+  const activityItems = session ? await getRecentSpins(2) : [];
 
   return (
     <div className="relative bg-[#131313] text-white">
@@ -208,18 +144,26 @@ export default async function FeedPage() {
           <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 xl:grid-cols-4">
             {featuredAlbums.map((album) => (
               <div
-                key={album.title}
+                key={album.id}
                 className="rounded-xl bg-[#2a2a2a] p-4 shadow-[0_10px_30px_-10px_rgba(0,0,0,0.5)]"
               >
                 <div className="overflow-hidden rounded-sm bg-[#1c1b1b]">
-                  <img
-                    src={album.image}
-                    alt={album.title}
-                    className="h-56 w-full object-cover"
-                  />
+                  {album.imageUrl ? (
+                    <img
+                      src={album.imageUrl}
+                      alt={album.name}
+                      className="h-56 w-full object-cover"
+                    />
+                  ) : (
+                    <div className="flex h-56 w-full items-end bg-linear-to-br from-[#2a2a2a] to-[#131313] p-4">
+                      <span className="text-xs uppercase tracking-[0.2em] text-[#e6beb2]">
+                        {album.name}
+                      </span>
+                    </div>
+                  )}
                 </div>
                 <h3 className="mt-4 font-serif text-lg font-bold">
-                  {album.title}
+                  {album.name}
                 </h3>
                 <p className="text-sm text-[#e6beb2]">{album.artist}</p>
                 <div className="mt-3">
@@ -252,15 +196,21 @@ export default async function FeedPage() {
                   key={activity.id}
                   className="flex flex-col gap-4 rounded-xl bg-[#131313] p-6 sm:flex-row"
                 >
-                  <img
-                    src={activity.avatar}
-                    alt={activity.user}
-                    className="h-12 w-12 rounded-full object-cover"
-                  />
+                  {activity.avatarUrl ? (
+                    <img
+                      src={activity.avatarUrl}
+                      alt={activity.userName}
+                      className="h-12 w-12 rounded-full object-cover"
+                    />
+                  ) : (
+                    <div className="flex h-12 w-12 items-center justify-center rounded-full bg-[#2a2a2a] text-xs font-semibold text-[#ffb59e]">
+                      {activity.initials}
+                    </div>
+                  )}
                   <div className="flex-1 space-y-3">
                     <div className="flex flex-wrap items-center gap-2 text-sm">
                       <span className="font-semibold text-white">
-                        {activity.user}
+                        {activity.userName}
                       </span>
                       <span className="text-xs uppercase tracking-[0.2em] text-[#e6beb2]">
                         {activity.action}

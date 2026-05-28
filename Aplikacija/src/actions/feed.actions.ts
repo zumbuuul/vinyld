@@ -1,115 +1,175 @@
 "use server";
 
-import { getIconicPressings as queryIconicPressings } from "@/db/queries/albums.queries";
+import { headers } from "next/headers";
+
+import {
+  getFollowedActivity,
+  getPopularStories,
+  getPopularUsers,
+  type FollowedActivityRow,
+  type PopularStoryRow,
+  type PopularUserRow,
+} from "@/db/queries/feed.queries";
 import { getRecentAlbumActivity } from "@/db/queries/reviews.queries";
+import { auth } from "@/lib/auth";
 import { getSpotifyAlbum } from "@/lib/spotify";
 
-export interface IconicPressingItem {
-  id: string;
-  name: string;
-  artist: string;
-  imageUrl: string | null;
-  rating: number;
-  reviewCount: number;
-  spotifyId: string;
-}
+export type RecentFeedItem = FollowedActivityRow & {
+  albumArtist: string | null;
+  albumImageUrl: string | null;
+  albumSpotifyId: string | null;
+  albumName: string | null;
+  activityLabel: string;
+  targetHref: string | null;
+};
 
-export interface RecentSpinItem {
+export type TrendingReviewItem = {
   id: string;
+  reviewType: "user" | "critic";
   userName: string;
-  action: string;
-  content: string;
-  rating: number;
-  likes: number;
-  comments: number;
-  avatarUrl: string | null;
-  initials: string;
+  userImage: string | null;
   albumName: string;
   albumArtist: string;
+  albumSpotifyId: string;
   albumImageUrl: string | null;
-  albumReleaseYear: number | null;
-}
+  excerpt: string;
+  likeCount: number;
+};
 
-function toFiveStarRating(rating10: number | null): number {
-  if (rating10 === null) {
-    return 0;
+export type PopularStory = PopularStoryRow;
+export type PopularUser = PopularUserRow;
+
+export type TrendingData = {
+  popularReviews: TrendingReviewItem[];
+  popularStories: PopularStory[];
+  popularUsers: PopularUser[];
+};
+
+function getExcerpt(value: string | null): string {
+  const trimmed = value?.trim();
+
+  if (!trimmed) {
+    return "Fresh listen added to the feed.";
   }
 
-  const normalized = Math.max(0, Math.min(10, rating10));
-  return Math.round(normalized / 2);
+  return trimmed.length > 150 ? `${trimmed.slice(0, 147)}...` : trimmed;
 }
 
-function getInitials(name: string): string {
-  const parts = name.split(" ").filter(Boolean);
-  const initials = parts.map((part) => part[0]).join("");
-  return initials.slice(0, 2).toUpperCase();
+function getActivityLabel(kind: FollowedActivityRow["kind"]): string {
+  switch (kind) {
+    case "review":
+      return "reviewed";
+    case "critic_review":
+      return "wrote a critique";
+    case "story":
+      return "created a playlist";
+    case "follow":
+      return "followed";
+  }
 }
 
-function getReleaseYear(
-  releaseDate: string | undefined,
-  fallback: number | null,
-): number | null {
-  if (releaseDate && releaseDate.length >= 4) {
-    const parsed = Number(releaseDate.slice(0, 4));
-    return Number.isNaN(parsed) ? (fallback ?? null) : parsed;
+function getTargetHref(activity: FollowedActivityRow): string | null {
+  if (activity.kind === "review" || activity.kind === "critic_review") {
+    return activity.albumSpotifyId ? `/album/${activity.albumSpotifyId}` : null;
   }
 
-  return fallback ?? null;
+  if (activity.kind === "story") {
+    return activity.storyId ? `/story/${activity.storyId}` : null;
+  }
+
+  if (activity.kind === "follow") {
+    return activity.targetUserId ? `/user/${activity.targetUserId}` : null;
+  }
+
+  return null;
 }
 
-export async function getIconicPressings(): Promise<IconicPressingItem[]> {
-  const rows = await queryIconicPressings(4);
-
-  const items = await Promise.all(
-    rows.map(async (row) => {
-      const spotify = await getSpotifyAlbum(row.spotifyId);
-      const artist = spotify?.artists?.[0]?.name ?? "Unknown Artist";
-      const imageUrl = spotify?.images?.[0]?.url ?? null;
-
-      return {
-        id: row.id,
-        name: spotify?.name ?? row.name,
-        artist,
-        imageUrl,
-        rating: toFiveStarRating(row.avgRating10),
-        reviewCount: row.reviewCount,
-        spotifyId: row.spotifyId,
-      };
-    }),
-  );
-
-  return items;
-}
-
-export async function getRecentSpins(limit = 2): Promise<RecentSpinItem[]> {
+async function mapRecentReviews(limit: number): Promise<TrendingReviewItem[]> {
   const rows = await getRecentAlbumActivity(limit);
 
   return Promise.all(
     rows.map(async (row) => {
       const spotify = await getSpotifyAlbum(row.albumSpotifyId);
-      const albumName = spotify?.name ?? row.albumName;
-      const albumArtist = spotify?.artists?.[0]?.name ?? "Unknown Artist";
 
       return {
         id: row.id,
+        reviewType: row.reviewType,
         userName: row.userName,
-        action: `Reviewed "${albumName}"`,
-        content: row.description?.trim()
-          ? row.description
-          : "Fresh listen added to the feed.",
-        rating: toFiveStarRating(row.rating10),
-        likes: row.likeCount,
-        comments: 0,
-        avatarUrl: row.userImage,
-        initials: getInitials(row.userName),
-        albumName,
-        albumArtist,
+        userImage: row.userImage,
+        albumName: spotify?.name ?? row.albumName,
+        albumArtist: spotify?.artists?.[0]?.name ?? "Unknown Artist",
+        albumSpotifyId: row.albumSpotifyId,
         albumImageUrl: spotify?.images?.[0]?.url ?? null,
-        albumReleaseYear: getReleaseYear(
-          spotify?.release_date,
-          row.albumReleaseYear,
-        ),
+        excerpt: getExcerpt(row.description),
+        likeCount: row.likeCount,
       };
     }),
   );
+}
+
+async function mapRecentActivities(
+  userId: string,
+  limit: number,
+): Promise<RecentFeedItem[]> {
+  const rows = await getFollowedActivity(userId, limit);
+
+  return Promise.all(
+    rows.map(async (row) => {
+      const activityLabel = getActivityLabel(row.kind);
+
+      if (row.kind === "review" || row.kind === "critic_review") {
+        const spotify = row.albumSpotifyId
+          ? await getSpotifyAlbum(row.albumSpotifyId)
+          : null;
+
+        return {
+          ...row,
+          albumArtist: spotify?.artists?.[0]?.name ?? "Unknown Artist",
+          albumImageUrl: spotify?.images?.[0]?.url ?? null,
+          albumSpotifyId: row.albumSpotifyId,
+          albumName: spotify?.name ?? row.albumName,
+          activityLabel,
+          targetHref: row.albumSpotifyId ? `/album/${row.albumSpotifyId}` : null,
+        };
+      }
+
+      return {
+        ...row,
+        albumArtist: null,
+        albumImageUrl: null,
+        albumSpotifyId: null,
+        albumName: null,
+        activityLabel,
+        targetHref: getTargetHref(row),
+      };
+    }),
+  );
+}
+
+export async function getRecentFeed(limit = 3): Promise<RecentFeedItem[]> {
+  const session = await auth.api.getSession({
+    headers: await headers(),
+  });
+
+  if (!session) {
+    throw new Error("Unauthorized");
+  }
+
+  return mapRecentActivities(session.user.id, limit);
+}
+
+export async function getTrendingContent(limit = 3): Promise<TrendingData> {
+  const [popularReviews, popularStories, popularUsers] = await Promise.all([
+    mapRecentReviews(limit),
+    getPopularStories(limit),
+    getPopularUsers(limit),
+  ]);
+
+  return {
+    popularReviews: [...popularReviews].sort(
+      (first, second) => second.likeCount - first.likeCount,
+    ),
+    popularStories,
+    popularUsers,
+  };
 }

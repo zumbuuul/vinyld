@@ -5,7 +5,11 @@ import { useState } from "react";
 
 import { signIn } from "@/lib/auth-client";
 
-export function LoginForm() {
+type LoginFormProps = {
+  redirectUrl: string;
+};
+
+export function LoginForm({ redirectUrl }: LoginFormProps) {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
@@ -21,7 +25,7 @@ export function LoginForm() {
     const result = await signIn.email({
       email,
       password,
-      callbackURL: "/",
+      callbackURL: redirectUrl,
     });
 
     if (result?.error) {
@@ -102,7 +106,10 @@ export function LoginForm() {
 
       <p className="text-sm text-[#e6beb2]">
         No account yet?{" "}
-        <Link href="/register" className="text-[#ffb59e] hover:text-white">
+        <Link
+          href={`/register?redirectUrl=${encodeURIComponent(redirectUrl)}`}
+          className="text-[#ffb59e] hover:text-white"
+        >
           Create one
         </Link>
       </p>

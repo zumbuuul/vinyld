@@ -1,7 +1,7 @@
 import Link from "next/link";
 
-import type { TrendingData } from "@/actions/feed.actions";
 import { UserAvatar } from "@/components/feed/UserAvatar";
+import type { TrendingData } from "@/features/feed/feed.types";
 
 export function TrendingSection({ trending }: { trending: TrendingData }) {
   return (

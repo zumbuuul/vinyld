@@ -80,31 +80,42 @@ export async function getPopularUsers(
   limit: number,
 ): Promise<PopularUserRow[]> {
   const result = await db.execute(sql`
-    WITH user_likes AS (
-      SELECT review_owner.user_id, COUNT(*)::int AS like_count
-      FROM (
-        SELECT uar.user_id, l.id
-        FROM "User_Album_Review" uar
-        JOIN "User_Album_Review_Likes" l ON l.review_id = uar.id
-        UNION ALL
-        SELECT car.user_id, l.id
-        FROM "Critic_Album_Review" car
-        JOIN "Critic_Album_Review_Likes" l ON l.review_id = car.id
-        UNION ALL
-        SELECT s.user_id, l.id
-        FROM "Story" s
-        JOIN "Story_Likes" l ON l.story_id = s.id
-      ) review_owner
-      GROUP BY review_owner.user_id
+    WITH user_like_events AS (
+      SELECT uar.user_id
+      FROM "User_Album_Review_Likes" uarl
+      JOIN "User_Album_Review" uar ON uar.id = uarl.review_id
+      WHERE uarl.date_created >= NOW() - INTERVAL '24 hours'
+
+      UNION ALL
+
+      SELECT usr.user_id
+      FROM "User_Song_Review_Likes" usrl
+      JOIN "User_Song_Review" usr ON usr.id = usrl.review_id
+      WHERE usrl.date_created >= NOW() - INTERVAL '24 hours'
+
+      UNION ALL
+
+      SELECT s.user_id
+      FROM "Story_Likes" sl
+      JOIN "Story" s ON s.id = sl.story_id
+      WHERE sl.date_created >= NOW() - INTERVAL '24 hours'
+    ),
+    likes_by_user AS (
+      SELECT user_id, COUNT(*)::int AS like_count
+      FROM user_like_events
+      GROUP BY user_id
     )
     SELECT
       u.id,
       u.name,
       u.image,
-      COALESCE(ul.like_count, 0)::int AS like_count
-    FROM "user" u
-    LEFT JOIN user_likes ul ON ul.user_id = u.id
-    ORDER BY like_count DESC, u.name ASC
+      lbu.like_count
+    FROM likes_by_user lbu
+    JOIN "user" u ON u.id = lbu.user_id
+    JOIN "UserPreferences" up
+      ON up.user_id = u.id
+     AND up.role = 'user'
+    ORDER BY lbu.like_count DESC, u.name ASC
     LIMIT ${limit}
   `);
 
@@ -215,24 +226,24 @@ export async function getFollowedActivity(
       SELECT
         f.id::text AS id,
         'follow'::text AS kind,
-        u.id::text AS actor_id,
-        u.name AS actor_name,
-        u.image AS actor_image,
+        actor.id::text AS actor_id,
+        actor.name AS actor_name,
+        actor.image AS actor_image,
         f.date_followed AS created_at,
         NULL::text AS album_spotify_id,
         NULL::text AS album_name,
         NULL::text AS story_id,
         NULL::text AS story_name,
         NULL::text AS story_image,
-        tu.id::text AS target_user_id,
-        tu.name AS target_user_name,
-        tu.image AS target_user_image,
+        target.id::text AS target_user_id,
+        target.name AS target_user_name,
+        target.image AS target_user_image,
         NULL::text AS title,
         NULL::text AS summary
       FROM "Following" f
-      JOIN "user" u ON u.id = f.followed_id
-      JOIN followed_users fu ON fu.followed_id = u.id
-      JOIN "user" tu ON tu.id = f.following_id
+      JOIN "user" actor ON actor.id = f.following_id
+      JOIN followed_users fu ON fu.followed_id = actor.id
+      JOIN "user" target ON target.id = f.followed_id
       WHERE f.date_followed >= NOW() - INTERVAL '24 hours'
     ) activities
     ORDER BY created_at DESC
@@ -272,7 +283,9 @@ export async function getFollowedActivity(
     storyImage: row.story_image ? String(row.story_image) : null,
     targetUserId: row.target_user_id ? String(row.target_user_id) : null,
     targetUserName: row.target_user_name ? String(row.target_user_name) : null,
-    targetUserImage: row.target_user_image ? String(row.target_user_image) : null,
+    targetUserImage: row.target_user_image
+      ? String(row.target_user_image)
+      : null,
     title: row.title ? String(row.title) : null,
     summary: row.summary ? String(row.summary) : null,
   }));

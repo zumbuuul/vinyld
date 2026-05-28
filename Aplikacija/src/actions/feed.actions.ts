@@ -7,43 +7,15 @@ import {
   getPopularStories,
   getPopularUsers,
   type FollowedActivityRow,
-  type PopularStoryRow,
-  type PopularUserRow,
 } from "@/db/queries/feed.queries";
 import { getRecentAlbumActivity } from "@/db/queries/reviews.queries";
+import type {
+  RecentFeedItem,
+  TrendingData,
+  TrendingReviewItem,
+} from "@/features/feed/feed.types";
 import { auth } from "@/lib/auth";
 import { getSpotifyAlbum } from "@/lib/spotify";
-
-export type RecentFeedItem = FollowedActivityRow & {
-  albumArtist: string | null;
-  albumImageUrl: string | null;
-  albumSpotifyId: string | null;
-  albumName: string | null;
-  activityLabel: string;
-  targetHref: string | null;
-};
-
-export type TrendingReviewItem = {
-  id: string;
-  reviewType: "user" | "critic";
-  userName: string;
-  userImage: string | null;
-  albumName: string;
-  albumArtist: string;
-  albumSpotifyId: string;
-  albumImageUrl: string | null;
-  excerpt: string;
-  likeCount: number;
-};
-
-export type PopularStory = PopularStoryRow;
-export type PopularUser = PopularUserRow;
-
-export type TrendingData = {
-  popularReviews: TrendingReviewItem[];
-  popularStories: PopularStory[];
-  popularUsers: PopularUser[];
-};
 
 function getExcerpt(value: string | null): string {
   const trimmed = value?.trim();

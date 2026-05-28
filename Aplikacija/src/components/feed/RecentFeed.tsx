@@ -1,7 +1,7 @@
 import Link from "next/link";
 
-import type { RecentFeedItem } from "@/actions/feed.actions";
 import { UserAvatar } from "@/components/feed/UserAvatar";
+import type { RecentFeedItem } from "@/features/feed/feed.types";
 
 function formatRelativeTime(value: string): string {
   const date = new Date(value);

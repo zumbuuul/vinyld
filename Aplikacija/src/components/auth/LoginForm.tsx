@@ -2,12 +2,30 @@
 
 import Link from "next/link";
 import { useState } from "react";
+import { z } from "zod";
 
 import { signIn } from "@/lib/auth-client";
 
 type LoginFormProps = {
   redirectUrl: string;
 };
+
+const loginFormSchema = z.object({
+  email: z.string().trim().email("Please enter a valid email address."),
+  password: z.string().min(1, "Password is required."),
+});
+
+type LoginFormData = z.infer<typeof loginFormSchema>;
+
+type LoginValidationResult =
+  | {
+      success: false;
+      error: string;
+    }
+  | {
+      success: true;
+      data: LoginFormData;
+    };
 
 export function LoginForm({ redirectUrl }: LoginFormProps) {
   const [email, setEmail] = useState("");
@@ -16,15 +34,37 @@ export function LoginForm({ redirectUrl }: LoginFormProps) {
   const [message, setMessage] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
+  const validateForm = (): LoginValidationResult => {
+    const parsed = loginFormSchema.safeParse({ email, password });
+
+    if (!parsed.success) {
+      return {
+        success: false,
+        error:
+          parsed.error.issues[0]?.message ?? "Please check your input data.",
+      };
+    }
+
+    return { success: true, data: parsed.data };
+  };
+
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     setError(null);
     setMessage(null);
+
+    const validationResult = validateForm();
+
+    if (!validationResult.success) {
+      setError(validationResult.error);
+      return;
+    }
+
     setLoading(true);
 
     const result = await signIn.email({
-      email,
-      password,
+      email: validationResult.data.email,
+      password: validationResult.data.password,
       callbackURL: redirectUrl,
     });
 

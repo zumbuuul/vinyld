@@ -2,8 +2,27 @@
 
 import Link from "next/link";
 import { useState } from "react";
+import { z } from "zod";
 
 import { signUp } from "@/lib/auth-client";
+
+const registerFormSchema = z.object({
+  name: z.string().trim().min(1, "Display name is required."),
+  email: z.string().trim().email("Please enter a valid email address."),
+  password: z.string().min(8, "Password must be at least 8 characters long."),
+});
+
+type RegisterFormData = z.infer<typeof registerFormSchema>;
+
+type RegisterValidationResult =
+  | {
+      success: false;
+      error: string;
+    }
+  | {
+      success: true;
+      data: RegisterFormData;
+    };
 
 export function RegisterForm() {
   const [name, setName] = useState("");
@@ -13,16 +32,38 @@ export function RegisterForm() {
   const [message, setMessage] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
+  const validateForm = (): RegisterValidationResult => {
+    const parsed = registerFormSchema.safeParse({ name, email, password });
+
+    if (!parsed.success) {
+      return {
+        success: false,
+        error:
+          parsed.error.issues[0]?.message ?? "Please check your input data.",
+      };
+    }
+
+    return { success: true, data: parsed.data };
+  };
+
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     setError(null);
     setMessage(null);
+
+    const validationResult = validateForm();
+
+    if (!validationResult.success) {
+      setError(validationResult.error);
+      return;
+    }
+
     setLoading(true);
 
     const result = await signUp.email({
-      name,
-      email,
-      password,
+      name: validationResult.data.name,
+      email: validationResult.data.email,
+      password: validationResult.data.password,
       callbackURL: "/",
     });
 

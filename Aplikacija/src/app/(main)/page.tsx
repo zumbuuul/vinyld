@@ -220,6 +220,35 @@ export default async function FeedPage() {
                       <StarRating rating={activity.rating} />
                     ) : null}
                     <p className="text-sm text-[#e6beb2]">{activity.content}</p>
+                    <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                      <div className="flex items-center gap-3">
+                        {activity.albumImageUrl ? (
+                          <img
+                            src={activity.albumImageUrl}
+                            alt={activity.albumName}
+                            className="h-11 w-11 rounded-sm object-cover"
+                          />
+                        ) : (
+                          <div className="flex h-11 w-11 items-center justify-center rounded-sm bg-[#2a2a2a] text-[10px] uppercase tracking-[0.2em] text-[#e6beb2]">
+                            LP
+                          </div>
+                        )}
+                        <div>
+                          <p className="text-[10px] uppercase tracking-[0.2em] text-[#ffb59e]">
+                            Album
+                          </p>
+                          <p className="text-sm text-white">
+                            {activity.albumName}
+                          </p>
+                          <p className="text-xs text-[#e6beb2]">
+                            {activity.albumArtist}
+                            {activity.albumReleaseYear
+                              ? ` · ${activity.albumReleaseYear}`
+                              : ""}
+                          </p>
+                        </div>
+                      </div>
+                    </div>
                     <div className="flex items-center gap-4 text-xs text-[#e6beb2]">
                       <span>{activity.likes} likes</span>
                       <span>{activity.comments} comments</span>

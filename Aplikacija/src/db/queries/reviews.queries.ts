@@ -8,6 +8,8 @@ export interface RecentAlbumActivityRow {
   userName: string;
   userImage: string | null;
   albumName: string;
+  albumSpotifyId: string;
+  albumReleaseYear: number | null;
   description: string | null;
   rating10: number | null;
   dateCreated: string | null;
@@ -24,6 +26,8 @@ export async function getRecentAlbumActivity(
       r.user_name,
       r.user_image,
       r.album_name,
+      r.album_spotify_id,
+      r.album_release_year,
       r.description,
       r.rating10,
       r.date_created,
@@ -39,6 +43,8 @@ export async function getRecentAlbumActivity(
         u.name AS user_name,
         u.image AS user_image,
         a.name AS album_name,
+        a.spotify_id AS album_spotify_id,
+        a.godina_izdavanja AS album_release_year,
         uar.description AS description,
         uar.ocena AS rating10,
         uar.date_created AS date_created
@@ -52,6 +58,8 @@ export async function getRecentAlbumActivity(
         u.name AS user_name,
         u.image AS user_image,
         a.name AS album_name,
+        a.spotify_id AS album_spotify_id,
+        a.godina_izdavanja AS album_release_year,
         car.tekst_kritike AS description,
         car.ocena AS rating10,
         car.date_created AS date_created
@@ -69,6 +77,8 @@ export async function getRecentAlbumActivity(
     user_name: string;
     user_image: string | null;
     album_name: string;
+    album_spotify_id: string;
+    album_release_year: number | null;
     description: string | null;
     rating10: number | null;
     date_created: string | null;
@@ -81,6 +91,9 @@ export async function getRecentAlbumActivity(
     userName: String(row.user_name),
     userImage: row.user_image ? String(row.user_image) : null,
     albumName: String(row.album_name),
+    albumSpotifyId: String(row.album_spotify_id),
+    albumReleaseYear:
+      row.album_release_year === null ? null : Number(row.album_release_year),
     description: row.description ? String(row.description) : null,
     rating10: row.rating10 === null ? null : Number(row.rating10),
     dateCreated: row.date_created ? String(row.date_created) : null,

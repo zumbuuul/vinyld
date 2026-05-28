@@ -2,6 +2,9 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { useEffect, useRef, useState } from "react";
+
+import { signOut, useSession } from "@/lib/auth-client";
 
 const navLinks = [
   { label: "Explore", href: "/search" },
@@ -10,6 +13,35 @@ const navLinks = [
 
 export default function Navbar() {
   const pathname = usePathname();
+  const { data: session, isPending } = useSession();
+  const [menuOpen, setMenuOpen] = useState(false);
+  const menuRef = useRef<HTMLDivElement | null>(null);
+
+  useEffect(() => {
+    if (!menuOpen) {
+      return undefined;
+    }
+
+    const handleClick = (event: MouseEvent) => {
+      if (!menuRef.current?.contains(event.target as Node)) {
+        setMenuOpen(false);
+      }
+    };
+
+    document.addEventListener("mousedown", handleClick);
+    return () => document.removeEventListener("mousedown", handleClick);
+  }, [menuOpen]);
+
+  const userId = session?.user?.id;
+  const userName = session?.user?.name ?? "";
+  const userImage = session?.user?.image ?? null;
+  const initials = userName
+    .split(" ")
+    .filter(Boolean)
+    .map((part) => part[0])
+    .join("")
+    .slice(0, 2)
+    .toUpperCase();
 
   return (
     <nav className="fixed top-0 left-0 right-0 z-50 bg-[rgba(19,19,19,0.7)] backdrop-blur-lg">
@@ -38,11 +70,7 @@ export default function Navbar() {
           </div>
         </div>
         <div className="flex items-center gap-3">
-          <button
-            type="button"
-            className="flex h-9 w-9 items-center justify-center rounded-full bg-white/5 text-white/70"
-            aria-label="Search"
-          >
+          <div className="flex h-9 items-center gap-2 rounded-full bg-white/5 px-3 text-white/70">
             <svg
               viewBox="0 0 24 24"
               fill="none"
@@ -54,13 +82,74 @@ export default function Navbar() {
               <circle cx="11" cy="11" r="7" />
               <line x1="16.65" y1="16.65" x2="21" y2="21" />
             </svg>
-          </button>
-          <Link
-            href="/register"
-            className="rounded-md bg-linear-to-r from-[#ffb59e] to-[#ff5717] px-4 py-2 text-sm font-serif font-semibold text-[#521300]"
-          >
-            Join the Club
-          </Link>
+            <input
+              type="text"
+              placeholder="Search"
+              className="hidden w-40 bg-transparent text-xs text-white/80 placeholder:text-white/40 focus:outline-none sm:block"
+            />
+          </div>
+          {isPending ? (
+            <div
+              className="h-10 w-24 rounded-md bg-white/5"
+              aria-hidden="true"
+            />
+          ) : session ? (
+            <div className="relative" ref={menuRef}>
+              <button
+                type="button"
+                onClick={() => setMenuOpen((prev) => !prev)}
+                aria-haspopup="menu"
+                aria-expanded={menuOpen}
+                className="flex h-10 w-10 items-center justify-center overflow-hidden rounded-full bg-[#2a2a2a] text-xs font-semibold text-[#ffb59e]"
+              >
+                {userImage ? (
+                  <img
+                    src={userImage}
+                    alt={userName || "User profile"}
+                    className="h-full w-full object-cover"
+                  />
+                ) : (
+                  initials || "U"
+                )}
+              </button>
+              {menuOpen ? (
+                <div className="absolute right-0 mt-3 w-48 rounded-xl bg-[#1c1b1b] p-2 text-sm shadow-[0_24px_60px_-20px_rgba(0,0,0,0.8)]">
+                  <Link
+                    href={userId ? `/user/${userId}` : "/login"}
+                    className="block rounded-lg px-3 py-2 text-white/80 hover:bg-[#2a2a2a] hover:text-white"
+                    onClick={() => setMenuOpen(false)}
+                  >
+                    Profile
+                  </Link>
+                  <Link
+                    href="/settings"
+                    className="block rounded-lg px-3 py-2 text-white/80 hover:bg-[#2a2a2a] hover:text-white"
+                    onClick={() => setMenuOpen(false)}
+                  >
+                    Settings
+                  </Link>
+                  <button
+                    type="button"
+                    onClick={async () => {
+                      setMenuOpen(false);
+                      await signOut();
+                      location.reload();
+                    }}
+                    className="mt-1 w-full rounded-lg px-3 py-2 text-left text-white/80 hover:bg-[#2a2a2a] hover:text-white"
+                  >
+                    Log out
+                  </button>
+                </div>
+              ) : null}
+            </div>
+          ) : (
+            <Link
+              href="/register"
+              className="rounded-md bg-linear-to-r from-[#ffb59e] to-[#ff5717] px-4 py-2 text-sm font-serif font-semibold text-[#521300]"
+            >
+              Join the Club
+            </Link>
+          )}
         </div>
       </div>
       <div className="flex items-center justify-center gap-6 border-t border-white/5 px-6 py-3 text-xs text-white/60 md:hidden">

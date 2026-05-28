@@ -1,8 +1,9 @@
 const TOKEN_ENDPOINT = "https://accounts.spotify.com/api/token";
 const API_BASE_URL = "https://api.spotify.com/v1";
 
-const clientId = process.env.SPOTIFY_CLIENT_ID;
-const clientSecret = process.env.SPOTIFY_CLIENT_SECRET;
+const clientId = process.env.SPOTIFY_ID ?? process.env.SPOTIFY_CLIENT_ID;
+const clientSecret =
+  process.env.SPOTIFY_SECRET ?? process.env.SPOTIFY_CLIENT_SECRET;
 
 interface SpotifyTokenResponse {
   access_token: string;

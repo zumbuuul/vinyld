@@ -9,7 +9,6 @@ import {
   varchar,
   integer,
   check,
-  date,
   primaryKey,
 } from "drizzle-orm/pg-core";
 import { sql } from "drizzle-orm";
@@ -148,7 +147,9 @@ export const userAlbumReview = pgTable(
     ocena: integer(),
     liked: boolean(),
     description: text(),
-    dateCreated: date("date_created").defaultNow().notNull(),
+    dateCreated: timestamp("date_created", { mode: "string" })
+      .defaultNow()
+      .notNull(),
   },
   (table) => [
     foreignKey({
@@ -174,7 +175,7 @@ export const userSongReview = pgTable(
     ocena: integer(),
     liked: boolean(),
     description: text(),
-    dateCreated: date("date_created").defaultNow(),
+    dateCreated: timestamp("date_created", { mode: "string" }).defaultNow(),
   },
   (table) => [
     check("ocena_in_range", sql`(ocena >= 0) AND (ocena <= 10)`),
@@ -201,7 +202,9 @@ export const criticAlbumReview = pgTable(
     ocena: integer().notNull(),
     tekstKritike: text("tekst_kritike").notNull(),
     zakljucak: varchar({ length: 255 }),
-    dateCreated: date("date_created").defaultNow().notNull(),
+    dateCreated: timestamp("date_created", { mode: "string" })
+      .defaultNow()
+      .notNull(),
   },
   (table) => [
     foreignKey({
@@ -228,7 +231,9 @@ export const criticSongReview = pgTable(
     ocena: integer().notNull(),
     tekstKritike: text("tekst_kritike").notNull(),
     zakljucak: varchar({ length: 255 }),
-    dateCreated: date("date_created").defaultNow().notNull(),
+    dateCreated: timestamp("date_created", { mode: "string" })
+      .defaultNow()
+      .notNull(),
   },
   (table) => [
     foreignKey({
@@ -253,7 +258,9 @@ export const story = pgTable(
     description: text(),
     image: text().notNull(),
     name: varchar({ length: 64 }).notNull(),
-    dateCreated: date("date_created").defaultNow().notNull(),
+    dateCreated: timestamp("date_created", { mode: "string" })
+      .defaultNow()
+      .notNull(),
   },
   (table) => [
     foreignKey({

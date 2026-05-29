@@ -10,12 +10,16 @@ import {
 } from "@/db/queries/feed.queries";
 import { getRecentAlbumActivity } from "@/db/queries/reviews.queries";
 import type {
+  RecentFeedCursor,
   RecentFeedItem,
+  RecentFeedPage,
   TrendingData,
   TrendingReviewItem,
 } from "@/features/feed/feed.types";
 import { auth } from "@/lib/auth";
 import { getSpotifyAlbum } from "@/lib/spotify";
+
+const DEFAULT_RECENT_FEED_PAGE_SIZE = 3;
 
 function getExcerpt(value: string | null): string {
   const trimmed = value?.trim();
@@ -56,6 +60,19 @@ function getTargetHref(activity: FollowedActivityRow): string | null {
   return null;
 }
 
+function getNextCursor(items: RecentFeedItem[]): RecentFeedCursor | null {
+  const lastItem = items.at(-1);
+
+  if (!lastItem) {
+    return null;
+  }
+
+  return {
+    createdAt: lastItem.createdAt,
+    id: lastItem.id,
+  };
+}
+
 async function mapRecentReviews(limit: number): Promise<TrendingReviewItem[]> {
   const rows = await getRecentAlbumActivity(limit);
 
@@ -79,12 +96,7 @@ async function mapRecentReviews(limit: number): Promise<TrendingReviewItem[]> {
   );
 }
 
-async function mapRecentActivities(
-  userId: string,
-  limit: number,
-): Promise<RecentFeedItem[]> {
-  const rows = await getFollowedActivity(userId, limit);
-
+async function mapRecentActivities(rows: FollowedActivityRow[]): Promise<RecentFeedItem[]> {
   return Promise.all(
     rows.map(async (row) => {
       const activityLabel = getActivityLabel(row.kind);
@@ -118,7 +130,38 @@ async function mapRecentActivities(
   );
 }
 
-export async function getRecentFeed(limit = 3): Promise<RecentFeedItem[]> {
+export async function getRecentFeedPageForUser(
+  userId: string,
+  params: {
+    limit?: number;
+    cursor?: RecentFeedCursor | null;
+    asOf?: string;
+  } = {},
+): Promise<RecentFeedPage> {
+  const limit = Math.max(1, Math.min(params.limit ?? DEFAULT_RECENT_FEED_PAGE_SIZE, 20));
+  const asOf = params.asOf ?? new Date().toISOString();
+  const rows = await getFollowedActivity(userId, limit + 1, {
+    asOf,
+    cursorCreatedAt: params.cursor?.createdAt ?? null,
+    cursorId: params.cursor?.id ?? null,
+  });
+  const hasMore = rows.length > limit;
+  const pageRows = hasMore ? rows.slice(0, limit) : rows;
+  const items = await mapRecentActivities(pageRows);
+
+  return {
+    items,
+    nextCursor: getNextCursor(items),
+    hasMore,
+    asOf,
+  };
+}
+
+export async function loadMoreRecentFeed(params: {
+  cursor: RecentFeedCursor | null;
+  asOf: string;
+  limit?: number;
+}): Promise<RecentFeedPage> {
   const session = await auth.api.getSession({
     headers: await headers(),
   });
@@ -127,7 +170,11 @@ export async function getRecentFeed(limit = 3): Promise<RecentFeedItem[]> {
     throw new Error("Unauthorized");
   }
 
-  return mapRecentActivities(session.user.id, limit);
+  return getRecentFeedPageForUser(session.user.id, {
+    limit: params.limit,
+    cursor: params.cursor,
+    asOf: params.asOf,
+  });
 }
 
 export async function getTrendingContent(limit = 3): Promise<TrendingData> {

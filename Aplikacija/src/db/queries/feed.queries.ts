@@ -37,6 +37,12 @@ export interface FollowedActivityRow {
   summary: string | null;
 }
 
+export interface FollowedActivityCursorOptions {
+  asOf: string;
+  cursorCreatedAt?: string | null;
+  cursorId?: string | null;
+}
+
 export async function getPopularStories(
   limit: number,
 ): Promise<PopularStoryRow[]> {
@@ -137,6 +143,7 @@ export async function getPopularUsers(
 export async function getFollowedActivity(
   userId: string,
   limit: number,
+  { asOf, cursorCreatedAt = null, cursorId = null }: FollowedActivityCursorOptions,
 ): Promise<FollowedActivityRow[]> {
   const result = await db.execute(sql`
     WITH followed_users AS (
@@ -246,7 +253,17 @@ export async function getFollowedActivity(
       JOIN "user" target ON target.id = f.followed_id
       WHERE f.date_followed >= NOW() - INTERVAL '24 hours'
     ) activities
-    ORDER BY created_at DESC
+    WHERE
+      activities.created_at <= ${asOf}::timestamp
+      AND (
+        ${cursorCreatedAt}::timestamp IS NULL
+        OR activities.created_at < ${cursorCreatedAt}::timestamp
+        OR (
+          activities.created_at = ${cursorCreatedAt}::timestamp
+          AND activities.id < ${cursorId}::text
+        )
+      )
+    ORDER BY activities.created_at DESC, activities.id DESC
     LIMIT ${limit}
   `);
 

@@ -57,3 +57,15 @@ export type TrendingData = {
   popularStories: PopularStory[];
   popularUsers: PopularUser[];
 };
+
+export type RecentFeedCursor = {
+  createdAt: string;
+  id: string;
+};
+
+export type RecentFeedPage = {
+  items: RecentFeedItem[];
+  nextCursor: RecentFeedCursor | null;
+  hasMore: boolean;
+  asOf: string;
+};

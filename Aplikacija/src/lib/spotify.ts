@@ -20,12 +20,33 @@ interface SpotifyArtist {
   name: string;
 }
 
+export interface SpotifyTrack {
+  id: string;
+  name: string;
+  duration_ms: number;
+  track_number: number;
+}
+
 export interface SpotifyAlbum {
   id: string;
   name: string;
   artists: SpotifyArtist[];
   images: SpotifyImage[];
   release_date: string;
+  genres?: string[];
+  tracks: {
+    items: SpotifyTrack[];
+  };
+}
+
+export interface SpotifyTrackDetails {
+  id: string;
+  name: string;
+  duration_ms: number;
+  album: {
+    id: string;
+    name: string;
+  };
 }
 
 interface TokenCache {
@@ -94,4 +115,30 @@ export async function getSpotifyAlbum(
   }
 
   return (await response.json()) as SpotifyAlbum;
+}
+
+export async function getSpotifyTrack(
+  spotifyId: string,
+): Promise<SpotifyTrackDetails | null> {
+  if (!spotifyId) {
+    return null;
+  }
+
+  const token = await getSpotifyAccessToken();
+  if (!token) {
+    return null;
+  }
+
+  const response = await fetch(`${API_BASE_URL}/tracks/${spotifyId}`, {
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+    cache: "no-store",
+  });
+
+  if (!response.ok) {
+    return null;
+  }
+
+  return (await response.json()) as SpotifyTrackDetails;
 }

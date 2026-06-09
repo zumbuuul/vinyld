@@ -10,6 +10,7 @@ import {
   integer,
   check,
   primaryKey,
+  index,
 } from "drizzle-orm/pg-core";
 import { sql } from "drizzle-orm";
 
@@ -83,11 +84,23 @@ export const album = pgTable(
   "Album",
   {
     id: uuid().defaultRandom().primaryKey().notNull(),
-    name: varchar({ length: 64 }).notNull(),
+    name: text().notNull(),
     godinaIzdavanja: integer("godina_izdavanja").notNull(),
     spotifyId: varchar("spotify_id", { length: 22 }).notNull(),
+    imageUrl: text("image_url"),
+    artistDisplayName: text("artist_display_name"),
+    releaseDate: varchar("release_date", { length: 10 }),
+    releaseDatePrecision: varchar("release_date_precision", { length: 10 }),
+    albumType: varchar("album_type", { length: 20 }),
+    totalTracks: integer("total_tracks"),
+    spotifyUri: text("spotify_uri"),
+    spotifyExternalUrl: text("spotify_external_url"),
+    lastSpotifySyncAt: timestamp("last_spotify_sync_at", { mode: "string" }),
   },
-  (table) => [unique("Album_spotify_id_key").on(table.spotifyId)],
+  (table) => [
+    unique("Album_spotify_id_key").on(table.spotifyId),
+    index("album_godina_izdavanja_idx").on(table.godinaIzdavanja),
+  ],
 );
 
 export const song = pgTable(
@@ -95,8 +108,16 @@ export const song = pgTable(
   {
     id: uuid().defaultRandom().primaryKey().notNull(),
     albumId: uuid("album_id").notNull(),
-    name: varchar({ length: 64 }).notNull(),
+    name: text().notNull(),
     spotifyId: varchar("spotify_id", { length: 22 }).notNull(),
+    artistDisplayName: text("artist_display_name"),
+    durationMs: integer("duration_ms"),
+    trackNumber: integer("track_number"),
+    discNumber: integer("disc_number").default(1).notNull(),
+    previewUrl: text("preview_url"),
+    spotifyUri: text("spotify_uri"),
+    spotifyExternalUrl: text("spotify_external_url"),
+    lastSpotifySyncAt: timestamp("last_spotify_sync_at", { mode: "string" }),
   },
   (table) => [
     unique("Song_spotify_id_key").on(table.spotifyId),
@@ -105,6 +126,12 @@ export const song = pgTable(
       foreignColumns: [album.id],
       name: "song_belongs_to_album",
     }).onDelete("cascade"),
+    index("song_album_id_idx").on(table.albumId),
+    index("song_album_track_order_idx").on(
+      table.albumId,
+      table.discNumber,
+      table.trackNumber,
+    ),
   ],
 );
 
@@ -135,6 +162,7 @@ export const albumGenres = pgTable(
       foreignColumns: [genre.id],
       name: "genre_of_album",
     }).onDelete("cascade"),
+    unique("unique_album_genre").on(table.albumId, table.genreId),
   ],
 );
 
@@ -163,6 +191,8 @@ export const userAlbumReview = pgTable(
       name: "review_of_album",
     }).onDelete("cascade"),
     check("ocena_in_range", sql`(ocena >= 0) AND (ocena <= 10)`),
+    unique("unique_user_album_review").on(table.userId, table.albumId),
+    index("user_album_review_date_created_idx").on(table.dateCreated),
   ],
 );
 
@@ -189,6 +219,8 @@ export const userSongReview = pgTable(
       foreignColumns: [song.id],
       name: "review_of_song",
     }).onDelete("cascade"),
+    unique("unique_user_song_review").on(table.userId, table.songId),
+    index("user_song_review_date_created_idx").on(table.dateCreated),
   ],
 );
 
@@ -218,6 +250,8 @@ export const criticAlbumReview = pgTable(
       name: "critic_review_of_album_fk",
     }).onDelete("cascade"),
     check("critic_album_ocena_in_range", sql`(ocena >= 0) AND (ocena <= 10)`),
+    unique("unique_critic_album_review").on(table.userId, table.albumId),
+    index("critic_album_review_date_created_idx").on(table.dateCreated),
   ],
 );
 
@@ -247,6 +281,8 @@ export const criticSongReview = pgTable(
       name: "critic_review_of_song_fk",
     }).onDelete("cascade"),
     check("critic_song_ocena_in_range", sql`(ocena >= 0) AND (ocena <= 10)`),
+    unique("unique_critic_song_review").on(table.userId, table.songId),
+    index("critic_song_review_date_created_idx").on(table.dateCreated),
   ],
 );
 
@@ -268,6 +304,7 @@ export const story = pgTable(
       foreignColumns: [user.id],
       name: "story_owned_by_user",
     }).onDelete("cascade"),
+    index("story_date_created_idx").on(table.dateCreated),
   ],
 );
 
@@ -292,6 +329,7 @@ export const storySongs = pgTable(
       foreignColumns: [song.id],
       name: "song_is_in_story",
     }).onDelete("cascade"),
+    unique("unique_story_song").on(table.storyId, table.songId),
   ],
 );
 
@@ -317,6 +355,8 @@ export const following = pgTable(
       foreignColumns: [user.id],
       name: "fk_following_user",
     }).onDelete("cascade"),
+    index("following_followed_id_idx").on(table.followedId),
+    index("following_following_id_idx").on(table.followingId),
   ],
 );
 
@@ -406,6 +446,7 @@ export const storyLikes = pgTable(
       name: "story_like_user_fk",
     }).onDelete("cascade"),
     unique("unique_story_like").on(table.storyId, table.userId),
+    index("story_likes_date_created_idx").on(table.dateCreated),
   ],
 );
 
@@ -431,6 +472,7 @@ export const userAlbumReviewLikes = pgTable(
       name: "user_album_review_like_user_fk",
     }).onDelete("cascade"),
     unique("unique_user_album_review_like").on(table.reviewId, table.userId),
+    index("user_album_review_likes_date_created_idx").on(table.dateCreated),
   ],
 );
 
@@ -456,6 +498,7 @@ export const userSongReviewLikes = pgTable(
       name: "user_song_review_like_user_fk",
     }).onDelete("cascade"),
     unique("unique_user_song_review_like").on(table.reviewId, table.userId),
+    index("user_song_review_likes_date_created_idx").on(table.dateCreated),
   ],
 );
 

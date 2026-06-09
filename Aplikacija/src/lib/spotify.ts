@@ -37,22 +37,6 @@ export interface SpotifyAlbum {
   images: SpotifyImage[];
   total_tracks: number;
   release_date: string;
-<<<<<<< HEAD
-  genres?: string[];
-  tracks: {
-    items: SpotifyTrack[];
-  };
-}
-
-export interface SpotifyTrackDetails {
-  id: string;
-  name: string;
-  duration_ms: number;
-  album: {
-    id: string;
-    name: string;
-  };
-=======
   release_date_precision: string;
   uri: string;
   external_urls: {
@@ -121,7 +105,6 @@ interface SpotifySearchResponse {
 interface SpotifyAlbumTracksResponse {
   items: SpotifyAlbumTrack[];
   next: string | null;
->>>>>>> albumpage
 }
 
 interface TokenCache {
@@ -285,30 +268,4 @@ export async function getSpotifyAlbumTracks(
   }
 
   return tracks;
-}
-
-export async function getSpotifyTrack(
-  spotifyId: string,
-): Promise<SpotifyTrackDetails | null> {
-  if (!spotifyId) {
-    return null;
-  }
-
-  const token = await getSpotifyAccessToken();
-  if (!token) {
-    return null;
-  }
-
-  const response = await fetch(`${API_BASE_URL}/tracks/${spotifyId}`, {
-    headers: {
-      Authorization: `Bearer ${token}`,
-    },
-    cache: "no-store",
-  });
-
-  if (!response.ok) {
-    return null;
-  }
-
-  return (await response.json()) as SpotifyTrackDetails;
 }

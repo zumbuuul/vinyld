@@ -12,11 +12,31 @@ type AlbumRecentReviewItem = {
   title: string | null;
   description: string | null;
   conclusion: string | null;
+  likedAlbum: boolean | null;
   rating10: number | null;
   likeCount: number;
   likedByViewer: boolean;
   createdAt: string | null;
 };
+
+function AlbumPreferenceBadge({ likedAlbum }: { likedAlbum: boolean }) {
+  return (
+    <div
+      className={`inline-flex items-center gap-2 rounded-full border px-3 py-1 text-[11px] uppercase tracking-[0.18em] ${
+        likedAlbum
+          ? "border-emerald-500/30 bg-emerald-500/10 text-emerald-200"
+          : "border-rose-500/30 bg-rose-500/10 text-rose-200"
+      }`}
+    >
+      <span
+        className={`h-2 w-2 rounded-full ${
+          likedAlbum ? "bg-emerald-300" : "bg-rose-300"
+        }`}
+      />
+      {likedAlbum ? "Liked album" : "Did not like album"}
+    </div>
+  );
+}
 
 function formatRelativeTime(value: string | null): string {
   if (!value) {
@@ -115,6 +135,12 @@ export function AlbumRecentReviews({
               ) : null}
 
               <ScoreDisplay rating10={review.rating10} className="mt-4" />
+
+              {review.reviewType === "user" && review.likedAlbum !== null ? (
+                <div className="mt-4">
+                  <AlbumPreferenceBadge likedAlbum={review.likedAlbum} />
+                </div>
+              ) : null}
 
               <p
                 className={`mt-4 text-sm leading-6 ${

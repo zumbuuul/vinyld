@@ -18,6 +18,7 @@ export type AlbumReviewListItemRow = {
   title: string | null;
   description: string | null;
   conclusion: string | null;
+  likedAlbum: boolean | null;
   rating10: number | null;
   likeCount: number;
   likedByViewer: boolean;
@@ -37,6 +38,7 @@ export async function getAlbumRecentReviews(
       title: sql<string | null>`NULL`,
       description: userAlbumReview.description,
       conclusion: sql<string | null>`NULL`,
+      likedAlbum: userAlbumReview.liked,
       rating10: userAlbumReview.ocena,
       likeCount: sql<number>`count(${userAlbumReviewLikes.id})::int`,
       likedByViewer: viewerId
@@ -70,6 +72,7 @@ export async function getAlbumRecentReviews(
       title: criticAlbumReview.naslov,
       description: criticAlbumReview.tekstKritike,
       conclusion: criticAlbumReview.zakljucak,
+      likedAlbum: sql<boolean | null>`NULL`,
       rating10: criticAlbumReview.ocena,
       likeCount: sql<number>`count(${criticAlbumReviewLikes.id})::int`,
       likedByViewer: viewerId
@@ -104,6 +107,10 @@ export async function getAlbumRecentReviews(
       title: row.title ? String(row.title) : null,
       description: row.description ? String(row.description) : null,
       conclusion: row.conclusion ? String(row.conclusion) : null,
+      likedAlbum:
+        row.likedAlbum === null || row.likedAlbum === undefined
+          ? null
+          : Boolean(row.likedAlbum),
       rating10: row.rating10 === null ? null : Number(row.rating10),
       likeCount: Number(row.likeCount ?? 0),
       likedByViewer: Boolean(row.likedByViewer),

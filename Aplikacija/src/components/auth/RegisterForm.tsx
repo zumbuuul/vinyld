@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import { z } from "zod";
 
 import { signUp } from "@/lib/auth-client";
@@ -31,6 +32,8 @@ export function RegisterForm() {
   const [error, setError] = useState<string | null>(null);
   const [message, setMessage] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+
+  const router = useRouter();
 
   const validateForm = (): RegisterValidationResult => {
     const parsed = registerFormSchema.safeParse({ name, email, password });
@@ -75,6 +78,7 @@ export function RegisterForm() {
 
     setMessage("Account created. Redirecting...");
     setLoading(false);
+    router.replace("/");
   };
 
   return (

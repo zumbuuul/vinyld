@@ -1,10 +1,17 @@
 import Link from "next/link";
 
+import { LikeButton } from "@/components/feed/LikeButton";
 import { ScoreDisplay } from "@/components/feed/ScoreDisplay";
 import { UserAvatar } from "@/components/feed/UserAvatar";
 import type { TrendingData } from "@/features/feed/feed.types";
 
-export function TrendingSection({ trending }: { trending: TrendingData }) {
+export function TrendingSection({
+  trending,
+  isAuthenticated,
+}: {
+  trending: TrendingData;
+  isAuthenticated: boolean;
+}) {
   return (
     <section id="trending" className="bg-[#1c1b1b] py-16">
       <div className="mx-auto flex w-full max-w-6xl flex-col gap-10 px-6">
@@ -43,7 +50,14 @@ export function TrendingSection({ trending }: { trending: TrendingData }) {
                           ? "Critic review"
                           : "User review"}
                       </span>
-                      <span>{review.likeCount} likes</span>
+                      <LikeButton
+                        reviewId={review.id}
+                        reviewType={review.reviewType}
+                        initialLikeCount={review.likeCount}
+                        initiallyLiked={review.likedByViewer}
+                        isAuthenticated={isAuthenticated}
+                        redirectUrl="/"
+                      />
                     </div>
                     <Link
                       href={`/album/${review.albumSpotifyId}`}

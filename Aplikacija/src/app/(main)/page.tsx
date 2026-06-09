@@ -30,15 +30,22 @@ async function PersonalizedFeedSection() {
       initialNextCursor={recentFeedPage.nextCursor}
       initialHasMore={recentFeedPage.hasMore}
       asOf={recentFeedPage.asOf}
+      isAuthenticated
       onLoadMore={loadMoreRecentFeed}
     />
   );
 }
 
 async function TrendingSectionSlot() {
-  const trending = await getTrendingContent(3);
+  const session = await getCurrentSession();
+  const trending = await getTrendingContent(3, session?.user.id ?? null);
 
-  return <TrendingSection trending={trending} />;
+  return (
+    <TrendingSection
+      trending={trending}
+      isAuthenticated={Boolean(session)}
+    />
+  );
 }
 
 export default function FeedPage() {

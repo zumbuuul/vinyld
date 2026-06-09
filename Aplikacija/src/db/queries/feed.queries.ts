@@ -38,6 +38,8 @@ export interface FollowedActivityRow {
   title: string | null;
   summary: string | null;
   rating10: number | null;
+  likeCount: number | null;
+  likedByViewer: boolean;
 }
 
 export interface FollowedActivityCursorOptions {
@@ -171,7 +173,18 @@ export async function getFollowedActivity(
         NULL::text AS target_user_image,
         NULL::text AS title,
         uar.description AS summary,
-        uar.ocena AS rating10
+        uar.ocena AS rating10,
+        (
+          SELECT COUNT(*)::int
+          FROM "User_Album_Review_Likes" uarl
+          WHERE uarl.review_id = uar.id
+        ) AS like_count,
+        EXISTS(
+          SELECT 1
+          FROM "User_Album_Review_Likes" viewer_like
+          WHERE viewer_like.review_id = uar.id
+            AND viewer_like.user_id = ${userId}
+        ) AS liked_by_viewer
       FROM "User_Album_Review" uar
       JOIN "user" u ON u.id = uar.user_id
       JOIN followed_users fu ON fu.followed_id = u.id
@@ -199,7 +212,18 @@ export async function getFollowedActivity(
         NULL::text AS target_user_image,
         car.naslov AS title,
         car.tekst_kritike AS summary,
-        car.ocena AS rating10
+        car.ocena AS rating10,
+        (
+          SELECT COUNT(*)::int
+          FROM "Critic_Album_Review_Likes" carl
+          WHERE carl.review_id = car.id
+        ) AS like_count,
+        EXISTS(
+          SELECT 1
+          FROM "Critic_Album_Review_Likes" viewer_like
+          WHERE viewer_like.review_id = car.id
+            AND viewer_like.user_id = ${userId}
+        ) AS liked_by_viewer
       FROM "Critic_Album_Review" car
       JOIN "user" u ON u.id = car.user_id
       JOIN "UserPreferences" up
@@ -230,7 +254,9 @@ export async function getFollowedActivity(
         NULL::text AS target_user_image,
         s.description AS title,
         s.description AS summary,
-        NULL::int AS rating10
+        NULL::int AS rating10,
+        NULL::int AS like_count,
+        FALSE AS liked_by_viewer
       FROM "Story" s
       JOIN "user" u ON u.id = s.user_id
       JOIN followed_users fu ON fu.followed_id = u.id
@@ -257,7 +283,9 @@ export async function getFollowedActivity(
         target.image AS target_user_image,
         NULL::text AS title,
         NULL::text AS summary,
-        NULL::int AS rating10
+        NULL::int AS rating10,
+        NULL::int AS like_count,
+        FALSE AS liked_by_viewer
       FROM "Following" f
       JOIN "user" actor ON actor.id = f.following_id
       JOIN followed_users fu ON fu.followed_id = actor.id
@@ -298,6 +326,8 @@ export async function getFollowedActivity(
     title: string | null;
     summary: string | null;
     rating10: number | null;
+    like_count: number | null;
+    liked_by_viewer: boolean;
   }>;
 
   return rows.map((row) => ({
@@ -322,5 +352,7 @@ export async function getFollowedActivity(
     title: row.title ? String(row.title) : null,
     summary: row.summary ? String(row.summary) : null,
     rating10: row.rating10 === null ? null : Number(row.rating10),
+    likeCount: row.like_count === null ? null : Number(row.like_count),
+    likedByViewer: Boolean(row.liked_by_viewer),
   }));
 }

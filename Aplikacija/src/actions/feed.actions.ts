@@ -1,7 +1,9 @@
 "use server";
 
+import { and, count, eq } from "drizzle-orm";
 import { headers } from "next/headers";
 
+import { db } from "@/db/db";
 import {
   getFollowedActivity,
   getPopularStories,
@@ -9,6 +11,10 @@ import {
   type FollowedActivityRow,
 } from "@/db/queries/feed.queries";
 import { getRecentAlbumActivity } from "@/db/queries/reviews.queries";
+import {
+  criticAlbumReviewLikes,
+  userAlbumReviewLikes,
+} from "@/db/schema";
 import type {
   RecentFeedCursor,
   RecentFeedItem,
@@ -72,8 +78,11 @@ function getNextCursor(items: RecentFeedItem[]): RecentFeedCursor | null {
   };
 }
 
-async function mapRecentReviews(limit: number): Promise<TrendingReviewItem[]> {
-  const rows = await getRecentAlbumActivity(limit);
+async function mapRecentReviews(
+  limit: number,
+  viewerId?: string | null,
+): Promise<TrendingReviewItem[]> {
+  const rows = await getRecentAlbumActivity(limit, viewerId);
 
   return rows.map((row) => ({
     id: row.id,
@@ -87,6 +96,7 @@ async function mapRecentReviews(limit: number): Promise<TrendingReviewItem[]> {
     excerpt: getExcerpt(row.description),
     rating10: row.rating10,
     likeCount: row.likeCount,
+    likedByViewer: row.likedByViewer,
   }));
 }
 
@@ -104,6 +114,8 @@ async function mapRecentActivities(
         albumSpotifyId: row.albumSpotifyId,
         albumName: row.albumName,
         rating10: row.rating10,
+        likeCount: row.likeCount,
+        likedByViewer: row.likedByViewer,
         activityLabel,
         targetHref: row.albumSpotifyId ? `/album/${row.albumSpotifyId}` : null,
       };
@@ -116,8 +128,104 @@ async function mapRecentActivities(
       albumSpotifyId: null,
       albumName: null,
       rating10: null,
+      likeCount: null,
+      likedByViewer: false,
       activityLabel,
       targetHref: getTargetHref(row),
+    };
+  });
+}
+
+export async function toggleAlbumReviewLike(reviewId: string): Promise<{
+  liked: boolean;
+  likeCount: number;
+}> {
+  const session = await auth.api.getSession({
+    headers: await headers(),
+  });
+
+  if (!session) {
+    throw new Error("Unauthorized");
+  }
+
+  return db.transaction(async (tx) => {
+    const [existingLike] = await tx
+      .select({ id: userAlbumReviewLikes.id })
+      .from(userAlbumReviewLikes)
+      .where(
+        and(
+          eq(userAlbumReviewLikes.reviewId, reviewId),
+          eq(userAlbumReviewLikes.userId, session.user.id),
+        ),
+      )
+      .limit(1);
+
+    if (existingLike) {
+      await tx
+        .delete(userAlbumReviewLikes)
+        .where(eq(userAlbumReviewLikes.id, existingLike.id));
+    } else {
+      await tx.insert(userAlbumReviewLikes).values({
+        reviewId,
+        userId: session.user.id,
+      });
+    }
+
+    const [countRow] = await tx
+      .select({ value: count() })
+      .from(userAlbumReviewLikes)
+      .where(eq(userAlbumReviewLikes.reviewId, reviewId));
+
+    return {
+      liked: !existingLike,
+      likeCount: Number(countRow?.value ?? 0),
+    };
+  });
+}
+
+export async function toggleCriticAlbumReviewLike(reviewId: string): Promise<{
+  liked: boolean;
+  likeCount: number;
+}> {
+  const session = await auth.api.getSession({
+    headers: await headers(),
+  });
+
+  if (!session) {
+    throw new Error("Unauthorized");
+  }
+
+  return db.transaction(async (tx) => {
+    const [existingLike] = await tx
+      .select({ id: criticAlbumReviewLikes.id })
+      .from(criticAlbumReviewLikes)
+      .where(
+        and(
+          eq(criticAlbumReviewLikes.reviewId, reviewId),
+          eq(criticAlbumReviewLikes.userId, session.user.id),
+        ),
+      )
+      .limit(1);
+
+    if (existingLike) {
+      await tx
+        .delete(criticAlbumReviewLikes)
+        .where(eq(criticAlbumReviewLikes.id, existingLike.id));
+    } else {
+      await tx.insert(criticAlbumReviewLikes).values({
+        reviewId,
+        userId: session.user.id,
+      });
+    }
+
+    const [countRow] = await tx
+      .select({ value: count() })
+      .from(criticAlbumReviewLikes)
+      .where(eq(criticAlbumReviewLikes.reviewId, reviewId));
+
+    return {
+      liked: !existingLike,
+      likeCount: Number(countRow?.value ?? 0),
     };
   });
 }
@@ -172,9 +280,12 @@ export async function loadMoreRecentFeed(params: {
   });
 }
 
-export async function getTrendingContent(limit = 3): Promise<TrendingData> {
+export async function getTrendingContent(
+  limit = 3,
+  viewerId?: string | null,
+): Promise<TrendingData> {
   const [popularReviews, popularStories, popularUsers] = await Promise.all([
-    mapRecentReviews(limit),
+    mapRecentReviews(limit, viewerId),
     getPopularStories(limit),
     getPopularUsers(limit),
   ]);

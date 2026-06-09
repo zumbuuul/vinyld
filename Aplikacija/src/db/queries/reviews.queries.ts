@@ -22,10 +22,12 @@ export interface RecentAlbumActivityRow {
   rating10: number | null;
   dateCreated: string | null;
   likeCount: number;
+  likedByViewer: boolean;
 }
 
 export async function getRecentAlbumActivity(
   limit: number,
+  viewerId?: string | null,
 ): Promise<RecentAlbumActivityRow[]> {
   const rows = await db
     .select({
@@ -42,6 +44,9 @@ export async function getRecentAlbumActivity(
       rating10: userAlbumReview.ocena,
       dateCreated: userAlbumReview.dateCreated,
       likeCount: sql<number>`count(${userAlbumReviewLikes.id})::int`,
+      likedByViewer: viewerId
+        ? sql<boolean>`bool_or(${userAlbumReviewLikes.userId} = ${viewerId})`
+        : sql<boolean>`false`,
     })
     .from(userAlbumReview)
     .innerJoin(user, eq(user.id, userAlbumReview.userId))
@@ -84,5 +89,6 @@ export async function getRecentAlbumActivity(
     rating10: row.rating10 === null ? null : Number(row.rating10),
     dateCreated: row.dateCreated ? String(row.dateCreated) : null,
     likeCount: Number(row.likeCount ?? 0),
+    likedByViewer: Boolean(row.likedByViewer),
   }));
 }

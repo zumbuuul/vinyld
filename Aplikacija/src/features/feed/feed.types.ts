@@ -20,6 +20,8 @@ export type RecentFeedItem = {
   albumArtist: string | null;
   albumImageUrl: string | null;
   rating10: number | null;
+  likeCount: number | null;
+  likedByViewer: boolean;
   activityLabel: string;
   targetHref: string | null;
 };
@@ -36,6 +38,7 @@ export type TrendingReviewItem = {
   excerpt: string;
   rating10: number | null;
   likeCount: number;
+  likedByViewer: boolean;
 };
 
 export type PopularStory = {

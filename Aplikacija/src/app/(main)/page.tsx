@@ -1,5 +1,3 @@
-import { headers } from "next/headers";
-
 import {
   getRecentFeedPageForUser,
   getTrendingContent,
@@ -8,12 +6,10 @@ import {
 import { HeroSection } from "@/components/feed/HeroSection";
 import { RecentFeed } from "@/components/feed/RecentFeed";
 import { TrendingSection } from "@/components/feed/TrendingSection";
-import { auth } from "@/lib/auth";
+import { getCurrentSession } from "@/lib/session";
 
 export default async function FeedPage() {
-  const session = await auth.api.getSession({
-    headers: await headers(),
-  });
+  const session = await getCurrentSession();
 
   const [recentFeedPage, trending] = await Promise.all([
     session

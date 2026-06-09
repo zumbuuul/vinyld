@@ -1,16 +1,12 @@
-import { headers } from "next/headers";
-
 import Navbar, { type NavbarViewer } from "@/components/Navbar";
-import { auth } from "@/lib/auth";
+import { getCurrentSession } from "@/lib/session";
 
 export default async function MainLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  const session = await auth.api.getSession({
-    headers: await headers(),
-  });
+  const session = await getCurrentSession();
   const viewer: NavbarViewer | null = session
     ? {
         id: session.user.id,

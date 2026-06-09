@@ -1,8 +1,7 @@
-import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 
 import { LoginForm } from "@/components/auth/LoginForm";
-import { auth } from "@/lib/auth";
+import { getCurrentSession } from "@/lib/session";
 
 type LoginPageProps = {
   searchParams?: Promise<{
@@ -28,9 +27,7 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
   const params = (await searchParams) ?? {};
   const redirectUrl = resolveRedirectUrl(params.redirectUrl);
 
-  const session = await auth.api.getSession({
-    headers: await headers(),
-  });
+  const session = await getCurrentSession();
 
   if (session) {
     redirect(redirectUrl);

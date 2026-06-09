@@ -1,6 +1,25 @@
 import { Suspense } from "react";
 
+<<<<<<< HEAD
 import Navbar from "@/components/Navbar";
+=======
+import Navbar, { type NavbarViewer } from "@/components/Navbar";
+import { NavbarSkeleton } from "@/components/feed/FeedSkeletons";
+import { getCurrentSession } from "@/lib/session";
+
+async function NavbarSlot() {
+  const session = await getCurrentSession();
+  const viewer: NavbarViewer | null = session
+    ? {
+        id: session.user.id,
+        name: session.user.name,
+        image: session.user.image ?? null,
+      }
+    : null;
+
+  return <Navbar viewer={viewer} />;
+}
+>>>>>>> albumpage
 
 function NavbarFallback() {
   return (
@@ -20,8 +39,13 @@ export default function MainLayout({
 }>) {
   return (
     <div className="relative">
+<<<<<<< HEAD
       <Suspense fallback={<NavbarFallback />}>
         <Navbar />
+=======
+      <Suspense fallback={<NavbarSkeleton />}>
+        <NavbarSlot />
+>>>>>>> albumpage
       </Suspense>
       <main className="pt-20 sm:pt-24">{children}</main>
     </div>

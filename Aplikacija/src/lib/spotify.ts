@@ -1,5 +1,6 @@
 const TOKEN_ENDPOINT = "https://accounts.spotify.com/api/token";
 const API_BASE_URL = "https://api.spotify.com/v1";
+const DEFAULT_MARKET = process.env.SPOTIFY_MARKET ?? "US";
 
 const clientId = process.env.SPOTIFY_ID ?? process.env.SPOTIFY_CLIENT_ID;
 const clientSecret =
@@ -17,6 +18,7 @@ interface SpotifyImage {
 }
 
 interface SpotifyArtist {
+  id: string;
   name: string;
 }
 
@@ -29,10 +31,13 @@ export interface SpotifyTrack {
 
 export interface SpotifyAlbum {
   id: string;
+  album_type: string;
   name: string;
   artists: SpotifyArtist[];
   images: SpotifyImage[];
+  total_tracks: number;
   release_date: string;
+<<<<<<< HEAD
   genres?: string[];
   tracks: {
     items: SpotifyTrack[];
@@ -47,6 +52,76 @@ export interface SpotifyTrackDetails {
     id: string;
     name: string;
   };
+=======
+  release_date_precision: string;
+  uri: string;
+  external_urls: {
+    spotify: string;
+  };
+}
+
+export interface SpotifyTrack {
+  id: string;
+  name: string;
+  artists: SpotifyArtist[];
+  duration_ms: number;
+  track_number: number;
+  disc_number: number;
+  preview_url: string | null;
+  uri: string;
+  external_urls: {
+    spotify: string;
+  };
+  album: {
+    id: string;
+    name: string;
+    images: SpotifyImage[];
+    artists: SpotifyArtist[];
+  };
+}
+
+export interface SpotifyAlbumTrack {
+  id: string;
+  name: string;
+  artists: SpotifyArtist[];
+  duration_ms: number;
+  track_number: number;
+  disc_number: number;
+  preview_url: string | null;
+  uri: string;
+  external_urls: {
+    spotify: string;
+  };
+}
+
+interface SpotifySearchResponse {
+  albums?: {
+    items: Array<{
+      id: string;
+      name: string;
+      artists: SpotifyArtist[];
+      images: SpotifyImage[];
+      release_date: string;
+    }>;
+  };
+  tracks?: {
+    items: Array<{
+      id: string;
+      name: string;
+      artists: SpotifyArtist[];
+      album: {
+        id: string;
+        name: string;
+        images: SpotifyImage[];
+      };
+    }>;
+  };
+}
+
+interface SpotifyAlbumTracksResponse {
+  items: SpotifyAlbumTrack[];
+  next: string | null;
+>>>>>>> albumpage
 }
 
 interface TokenCache {
@@ -94,16 +169,31 @@ async function getSpotifyAccessToken(): Promise<string | null> {
 export async function getSpotifyAlbum(
   spotifyId: string,
 ): Promise<SpotifyAlbum | null> {
-  if (!spotifyId) {
-    return null;
-  }
+  return spotifyFetch<SpotifyAlbum>(`/albums/${spotifyId}`, {
+    market: DEFAULT_MARKET,
+  });
+}
 
+async function spotifyFetch<T>(
+  path: string,
+  params?: Record<string, string | number | undefined>,
+): Promise<T | null> {
   const token = await getSpotifyAccessToken();
   if (!token) {
     return null;
   }
 
-  const response = await fetch(`${API_BASE_URL}/albums/${spotifyId}`, {
+  const url = new URL(`${API_BASE_URL}${path}`);
+
+  if (params) {
+    for (const [key, value] of Object.entries(params)) {
+      if (value !== undefined) {
+        url.searchParams.set(key, String(value));
+      }
+    }
+  }
+
+  const response = await fetch(url, {
     headers: {
       Authorization: `Bearer ${token}`,
     },
@@ -114,7 +204,87 @@ export async function getSpotifyAlbum(
     return null;
   }
 
-  return (await response.json()) as SpotifyAlbum;
+  return (await response.json()) as T;
+}
+
+export async function searchSpotifyAlbumsByName(
+  query: string,
+  limit = 1,
+): Promise<SpotifySearchResponse["albums"] | null> {
+  return (
+    (
+      await spotifyFetch<SpotifySearchResponse>("/search", {
+        q: `album:${query}`,
+        type: "album",
+        limit,
+        market: DEFAULT_MARKET,
+      })
+    )?.albums ?? null
+  );
+}
+
+export async function searchSpotifyTracksByName(
+  query: string,
+  limit = 1,
+): Promise<SpotifySearchResponse["tracks"] | null> {
+  return (
+    (
+      await spotifyFetch<SpotifySearchResponse>("/search", {
+        q: `track:${query}`,
+        type: "track",
+        limit,
+        market: DEFAULT_MARKET,
+      })
+    )?.tracks ?? null
+  );
+}
+
+export async function getSpotifyTrack(
+  spotifyId: string,
+): Promise<SpotifyTrack | null> {
+  if (!spotifyId) {
+    return null;
+  }
+
+  return spotifyFetch<SpotifyTrack>(`/tracks/${spotifyId}`, {
+    market: DEFAULT_MARKET,
+  });
+}
+
+export async function getSpotifyAlbumTracks(
+  spotifyId: string,
+): Promise<SpotifyAlbumTrack[]> {
+  if (!spotifyId) {
+    return [];
+  }
+
+  const tracks: SpotifyAlbumTrack[] = [];
+  let offset = 0;
+
+  while (true) {
+    const page = await spotifyFetch<SpotifyAlbumTracksResponse>(
+      `/albums/${spotifyId}/tracks`,
+      {
+        market: DEFAULT_MARKET,
+        limit: 50,
+        offset,
+      },
+    );
+
+    if (!page) {
+      break;
+    }
+
+    tracks.push(...page.items);
+
+    if (!page.next || page.items.length === 0) {
+      break;
+    }
+
+    offset += page.items.length;
+  }
+
+  return tracks;
 }
 
 export async function getSpotifyTrack(

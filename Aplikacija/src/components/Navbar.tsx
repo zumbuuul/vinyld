@@ -4,16 +4,26 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 
-import { signOut, useSession } from "@/lib/auth-client";
+import { signOut } from "@/lib/auth-client";
+import { NavbarSearch } from "@/components/NavbarSearch";
 
 const navLinks = [
   { label: "Explore", href: "/search" },
   { label: "Community", href: "/community" },
 ];
 
-export default function Navbar() {
+export type NavbarViewer = {
+  id: string;
+  name: string;
+  image: string | null;
+};
+
+type NavbarProps = {
+  viewer: NavbarViewer | null;
+};
+
+export default function Navbar({ viewer }: NavbarProps) {
   const pathname = usePathname();
-  const { data: session, isPending } = useSession();
   const [menuOpen, setMenuOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement | null>(null);
 
@@ -32,9 +42,9 @@ export default function Navbar() {
     return () => document.removeEventListener("mousedown", handleClick);
   }, [menuOpen]);
 
-  const userId = session?.user?.id;
-  const userName = session?.user?.name ?? "";
-  const userImage = session?.user?.image ?? null;
+  const userId = viewer?.id;
+  const userName = viewer?.name ?? "";
+  const userImage = viewer?.image ?? null;
   const initials = userName
     .split(" ")
     .filter(Boolean)
@@ -70,30 +80,8 @@ export default function Navbar() {
           </div>
         </div>
         <div className="flex items-center gap-3">
-          <div className="flex h-9 items-center gap-2 rounded-full bg-white/5 px-3 text-white/70">
-            <svg
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="1.8"
-              className="h-4 w-4"
-              aria-hidden="true"
-            >
-              <circle cx="11" cy="11" r="7" />
-              <line x1="16.65" y1="16.65" x2="21" y2="21" />
-            </svg>
-            <input
-              type="text"
-              placeholder="Search"
-              className="hidden w-40 bg-transparent text-xs text-white/80 placeholder:text-white/40 focus:outline-none sm:block"
-            />
-          </div>
-          {isPending ? (
-            <div
-              className="h-10 w-24 rounded-md bg-white/5"
-              aria-hidden="true"
-            />
-          ) : session ? (
+          <NavbarSearch />
+          {viewer ? (
             <div className="relative" ref={menuRef}>
               <button
                 type="button"

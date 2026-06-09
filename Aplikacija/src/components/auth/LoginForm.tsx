@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { z } from "zod";
 
@@ -28,6 +29,7 @@ type LoginValidationResult =
     };
 
 export function LoginForm({ redirectUrl }: LoginFormProps) {
+  const router = useRouter();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
@@ -65,7 +67,6 @@ export function LoginForm({ redirectUrl }: LoginFormProps) {
     const result = await signIn.email({
       email: validationResult.data.email,
       password: validationResult.data.password,
-      callbackURL: redirectUrl,
     });
 
     if (result?.error) {
@@ -75,7 +76,7 @@ export function LoginForm({ redirectUrl }: LoginFormProps) {
     }
 
     setMessage("Signed in. Redirecting...");
-    setLoading(false);
+    router.replace(redirectUrl);
   };
 
   return (

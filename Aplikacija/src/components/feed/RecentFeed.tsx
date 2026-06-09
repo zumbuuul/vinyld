@@ -3,6 +3,8 @@
 import Link from "next/link";
 import { useState, useTransition } from "react";
 
+import { LikeButton } from "@/components/feed/LikeButton";
+import { ScoreDisplay } from "@/components/feed/ScoreDisplay";
 import { UserAvatar } from "@/components/feed/UserAvatar";
 import type {
   RecentFeedCursor,
@@ -36,12 +38,14 @@ export function RecentFeed({
   initialNextCursor,
   initialHasMore,
   asOf,
+  isAuthenticated,
   onLoadMore,
 }: {
   initialItems: RecentFeedItem[];
   initialNextCursor: RecentFeedCursor | null;
   initialHasMore: boolean;
   asOf: string;
+  isAuthenticated: boolean;
   onLoadMore: (params: {
     cursor: RecentFeedCursor | null;
     asOf: string;
@@ -162,9 +166,22 @@ export function RecentFeed({
                         {item.title}
                       </p>
                     ) : null}
+                    <ScoreDisplay rating10={item.rating10} className="mt-4" />
                     <p className="mt-4 text-sm text-[#e6beb2]">
                       {item.summary ?? "Fresh listen added to the feed."}
                     </p>
+                    <div className="mt-4">
+                      <LikeButton
+                        reviewId={item.id}
+                        reviewType={
+                          item.kind === "critic_review" ? "critic" : "user"
+                        }
+                        initialLikeCount={item.likeCount ?? 0}
+                        initiallyLiked={item.likedByViewer}
+                        isAuthenticated={isAuthenticated}
+                        redirectUrl="/"
+                      />
+                    </div>
                   </>
                 ) : null}
 

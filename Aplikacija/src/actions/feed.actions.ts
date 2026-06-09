@@ -96,7 +96,9 @@ async function mapRecentReviews(limit: number): Promise<TrendingReviewItem[]> {
   );
 }
 
-async function mapRecentActivities(rows: FollowedActivityRow[]): Promise<RecentFeedItem[]> {
+async function mapRecentActivities(
+  rows: FollowedActivityRow[],
+): Promise<RecentFeedItem[]> {
   return Promise.all(
     rows.map(async (row) => {
       const activityLabel = getActivityLabel(row.kind);
@@ -113,7 +115,9 @@ async function mapRecentActivities(rows: FollowedActivityRow[]): Promise<RecentF
           albumSpotifyId: row.albumSpotifyId,
           albumName: spotify?.name ?? row.albumName,
           activityLabel,
-          targetHref: row.albumSpotifyId ? `/album/${row.albumSpotifyId}` : null,
+          targetHref: row.albumSpotifyId
+            ? `/album/${row.albumSpotifyId}`
+            : null,
         };
       }
 
@@ -138,7 +142,10 @@ export async function getRecentFeedPageForUser(
     asOf?: string;
   } = {},
 ): Promise<RecentFeedPage> {
-  const limit = Math.max(1, Math.min(params.limit ?? DEFAULT_RECENT_FEED_PAGE_SIZE, 20));
+  const limit = Math.max(
+    1,
+    Math.min(params.limit ?? DEFAULT_RECENT_FEED_PAGE_SIZE),
+  );
   const asOf = params.asOf ?? new Date().toISOString();
   const rows = await getFollowedActivity(userId, limit + 1, {
     asOf,

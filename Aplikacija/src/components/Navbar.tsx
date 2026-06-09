@@ -4,16 +4,25 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 
-import { signOut, useSession } from "@/lib/auth-client";
+import { signOut } from "@/lib/auth-client";
 
 const navLinks = [
   { label: "Explore", href: "/search" },
   { label: "Community", href: "/community" },
 ];
 
-export default function Navbar() {
+export type NavbarViewer = {
+  id: string;
+  name: string;
+  image: string | null;
+};
+
+type NavbarProps = {
+  viewer: NavbarViewer | null;
+};
+
+export default function Navbar({ viewer }: NavbarProps) {
   const pathname = usePathname();
-  const { data: session, isPending } = useSession();
   const [menuOpen, setMenuOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement | null>(null);
 
@@ -32,9 +41,9 @@ export default function Navbar() {
     return () => document.removeEventListener("mousedown", handleClick);
   }, [menuOpen]);
 
-  const userId = session?.user?.id;
-  const userName = session?.user?.name ?? "";
-  const userImage = session?.user?.image ?? null;
+  const userId = viewer?.id;
+  const userName = viewer?.name ?? "";
+  const userImage = viewer?.image ?? null;
   const initials = userName
     .split(" ")
     .filter(Boolean)
@@ -88,12 +97,7 @@ export default function Navbar() {
               className="hidden w-40 bg-transparent text-xs text-white/80 placeholder:text-white/40 focus:outline-none sm:block"
             />
           </div>
-          {isPending ? (
-            <div
-              className="h-10 w-24 rounded-md bg-white/5"
-              aria-hidden="true"
-            />
-          ) : session ? (
+          {viewer ? (
             <div className="relative" ref={menuRef}>
               <button
                 type="button"

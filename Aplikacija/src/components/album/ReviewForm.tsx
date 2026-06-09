@@ -3,7 +3,7 @@
 import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
 
-import { saveAlbumReview } from "@/actions/album.actions";
+import { deleteAlbumReview, saveAlbumReview } from "@/actions/review.actions";
 import {
   FormField,
   FormShell,
@@ -11,6 +11,7 @@ import {
   RatingInput,
   SubmitAction,
 } from "@/components/album/form.shared";
+import { albumReviewInputSchema } from "@/features/album/review.schemas";
 
 export function ReviewForm({
   albumId,
@@ -18,6 +19,7 @@ export function ReviewForm({
   initialLiked,
   initialRating10,
   initialDescription,
+  hasExistingReview,
   isAuthenticated,
   redirectUrl,
 }: {
@@ -26,6 +28,7 @@ export function ReviewForm({
   initialLiked: boolean;
   initialRating10: number;
   initialDescription: string;
+  hasExistingReview: boolean;
   isAuthenticated: boolean;
   redirectUrl: string;
 }) {
@@ -43,22 +46,59 @@ export function ReviewForm({
   const handleSubmit = () => {
     setSubmitError(null);
 
+    const parsed = albumReviewInputSchema.safeParse({
+      albumId,
+      albumSpotifyId,
+      rating10,
+      liked,
+      description,
+    });
+
+    if (!parsed.success) {
+      setSubmitError(
+        parsed.error.issues[0]?.message ?? "Neispravan unos recenzije.",
+      );
+      return;
+    }
+
     startTransition(async () => {
       try {
-        const result = await saveAlbumReview({
-          albumId,
-          albumSpotifyId,
-          rating10,
-          liked,
-          description,
-        });
+        const result = await saveAlbumReview(parsed.data);
 
         setLiked(result.liked);
         setRating10(result.rating10);
         setDescription(result.description);
         router.refresh();
-      } catch {
-        setSubmitError("Nismo uspeli da sacuvamo recenziju.");
+      } catch (error) {
+        setSubmitError(
+          error instanceof Error
+            ? error.message
+            : "Nismo uspeli da sacuvamo recenziju.",
+        );
+      }
+    });
+  };
+
+  const handleDelete = () => {
+    setSubmitError(null);
+
+    startTransition(async () => {
+      try {
+        await deleteAlbumReview({
+          albumId,
+          albumSpotifyId,
+        });
+
+        setLiked(false);
+        setRating10(1);
+        setDescription("");
+        router.refresh();
+      } catch (error) {
+        setSubmitError(
+          error instanceof Error
+            ? error.message
+            : "Nismo uspeli da obrisemo recenziju.",
+        );
       }
     });
   };
@@ -104,15 +144,28 @@ export function ReviewForm({
         />
       </FormField>
 
-      <SubmitAction
-        isAuthenticated={isAuthenticated}
-        redirectUrl={redirectUrl}
-        onAction={handleSubmit}
-        disabled={isPending}
-        pendingLabel="Cuvanje..."
-        idleLabel="Objavi"
-        className="h-11 w-full rounded-2xl bg-linear-to-r from-[#ffb59e] to-[#ff5d2d] text-xs uppercase tracking-[0.22em] text-[#341007] hover:from-[#ffbfa9] hover:to-[#ff6b3e]"
-      />
+      <div className="flex flex-col gap-3 sm:flex-row">
+        <SubmitAction
+          isAuthenticated={isAuthenticated}
+          redirectUrl={redirectUrl}
+          onAction={handleSubmit}
+          disabled={isPending}
+          pendingLabel="Cuvanje..."
+          idleLabel="Objavi"
+          className="h-11 w-full rounded-2xl bg-linear-to-r from-[#ffb59e] to-[#ff5d2d] text-xs uppercase tracking-[0.22em] text-[#341007] hover:from-[#ffbfa9] hover:to-[#ff6b3e] sm:flex-1"
+        />
+        {hasExistingReview ? (
+          <SubmitAction
+            isAuthenticated={isAuthenticated}
+            redirectUrl={redirectUrl}
+            onAction={handleDelete}
+            disabled={isPending}
+            pendingLabel="Brisanje..."
+            idleLabel="Obrisi"
+            className="h-11 w-full rounded-2xl border border-[#4a2e28] bg-transparent text-xs uppercase tracking-[0.22em] text-[#ffb59e] hover:bg-[#241714] sm:w-auto sm:px-6"
+          />
+        ) : null}
+      </div>
 
       {submitError ? (
         <p className="text-sm text-[#ff9f87]">{submitError}</p>

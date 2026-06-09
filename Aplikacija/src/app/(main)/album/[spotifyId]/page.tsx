@@ -122,6 +122,7 @@ async function AlbumDetailsView({
                   initialLiked={existingReview?.liked ?? false}
                   initialRating10={existingReview?.rating10 ?? 0}
                   initialDescription={existingReview?.description ?? ""}
+                  hasExistingReview={Boolean(existingReview)}
                   isAuthenticated
                   redirectUrl={`/album/${album.spotifyId}`}
                 />
@@ -135,6 +136,7 @@ async function AlbumDetailsView({
                   initialRating10={existingCritique?.rating10 ?? 0}
                   initialCritiqueText={existingCritique?.critiqueText ?? ""}
                   initialConclusion={existingCritique?.conclusion ?? ""}
+                  hasExistingReview={Boolean(existingCritique)}
                   isAuthenticated
                   redirectUrl={`/album/${album.spotifyId}`}
                 />

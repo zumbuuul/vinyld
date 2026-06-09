@@ -73,27 +73,13 @@ async function syncAlbumFromSpotify(spotifyId: string): Promise<void> {
     ),
   );
 
-  const [albumRow] = await db
-    .insert(album)
-    .values({
-      name: spotifyAlbum.name,
-      godinaIzdavanja: getReleaseYear(spotifyAlbum.release_date),
-      spotifyId: spotifyAlbum.id,
-      imageUrl,
-      artistDisplayName,
-      releaseDate: spotifyAlbum.release_date,
-      releaseDatePrecision: spotifyAlbum.release_date_precision,
-      albumType: spotifyAlbum.album_type,
-      totalTracks: spotifyAlbum.total_tracks,
-      spotifyUri: spotifyAlbum.uri,
-      spotifyExternalUrl: externalUrl,
-      lastSpotifySyncAt: now,
-    })
-    .onConflictDoUpdate({
-      target: album.spotifyId,
-      set: {
+  await db.transaction(async (tx) => {
+    const [albumRow] = await tx
+      .insert(album)
+      .values({
         name: spotifyAlbum.name,
         godinaIzdavanja: getReleaseYear(spotifyAlbum.release_date),
+        spotifyId: spotifyAlbum.id,
         imageUrl,
         artistDisplayName,
         releaseDate: spotifyAlbum.release_date,
@@ -103,32 +89,32 @@ async function syncAlbumFromSpotify(spotifyId: string): Promise<void> {
         spotifyUri: spotifyAlbum.uri,
         spotifyExternalUrl: externalUrl,
         lastSpotifySyncAt: now,
-      },
-    })
-    .returning({ id: album.id });
-
-  for (const track of spotifyTracks) {
-    await db
-      .insert(song)
-      .values({
-        albumId: albumRow.id,
-        name: track.name,
-        spotifyId: track.id,
-        artistDisplayName:
-          track.artists.map((artist) => artist.name).join(", ") || null,
-        durationMs: track.duration_ms,
-        trackNumber: track.track_number,
-        discNumber: track.disc_number,
-        previewUrl: track.preview_url,
-        spotifyUri: track.uri,
-        spotifyExternalUrl: track.external_urls?.spotify ?? null,
-        lastSpotifySyncAt: now,
       })
       .onConflictDoUpdate({
-        target: song.spotifyId,
+        target: album.spotifyId,
         set: {
+          name: spotifyAlbum.name,
+          godinaIzdavanja: getReleaseYear(spotifyAlbum.release_date),
+          imageUrl,
+          artistDisplayName,
+          releaseDate: spotifyAlbum.release_date,
+          releaseDatePrecision: spotifyAlbum.release_date_precision,
+          albumType: spotifyAlbum.album_type,
+          totalTracks: spotifyAlbum.total_tracks,
+          spotifyUri: spotifyAlbum.uri,
+          spotifyExternalUrl: externalUrl,
+          lastSpotifySyncAt: now,
+        },
+      })
+      .returning({ id: album.id });
+
+    for (const track of spotifyTracks) {
+      await tx
+        .insert(song)
+        .values({
           albumId: albumRow.id,
           name: track.name,
+          spotifyId: track.id,
           artistDisplayName:
             track.artists.map((artist) => artist.name).join(", ") || null,
           durationMs: track.duration_ms,
@@ -138,41 +124,57 @@ async function syncAlbumFromSpotify(spotifyId: string): Promise<void> {
           spotifyUri: track.uri,
           spotifyExternalUrl: track.external_urls?.spotify ?? null,
           lastSpotifySyncAt: now,
-        },
-      });
-  }
-
-  await db.delete(albumGenres).where(eq(albumGenres.albumId, albumRow.id));
-
-  for (const genreName of genreNames) {
-    const [insertedGenre] = await db
-      .insert(genre)
-      .values({ name: genreName })
-      .onConflictDoNothing()
-      .returning({ id: genre.id });
-
-    const targetGenre =
-      insertedGenre ??
-      (
-        await db
-          .select({ id: genre.id })
-          .from(genre)
-          .where(eq(genre.name, genreName))
-          .limit(1)
-      )[0];
-
-    if (!targetGenre) {
-      continue;
+        })
+        .onConflictDoUpdate({
+          target: song.spotifyId,
+          set: {
+            albumId: albumRow.id,
+            name: track.name,
+            artistDisplayName:
+              track.artists.map((artist) => artist.name).join(", ") || null,
+            durationMs: track.duration_ms,
+            trackNumber: track.track_number,
+            discNumber: track.disc_number,
+            previewUrl: track.preview_url,
+            spotifyUri: track.uri,
+            spotifyExternalUrl: track.external_urls?.spotify ?? null,
+            lastSpotifySyncAt: now,
+          },
+        });
     }
 
-    await db
-      .insert(albumGenres)
-      .values({
-        albumId: albumRow.id,
-        genreId: targetGenre.id,
-      })
-      .onConflictDoNothing();
-  }
+    await tx.delete(albumGenres).where(eq(albumGenres.albumId, albumRow.id));
+
+    for (const genreName of genreNames) {
+      const [insertedGenre] = await tx
+        .insert(genre)
+        .values({ name: genreName })
+        .onConflictDoNothing()
+        .returning({ id: genre.id });
+
+      const targetGenre =
+        insertedGenre ??
+        (
+          await tx
+            .select({ id: genre.id })
+            .from(genre)
+            .where(eq(genre.name, genreName))
+            .limit(1)
+        )[0];
+
+      if (!targetGenre) {
+        continue;
+      }
+
+      await tx
+        .insert(albumGenres)
+        .values({
+          albumId: albumRow.id,
+          genreId: targetGenre.id,
+        })
+        .onConflictDoNothing();
+    }
+  });
 }
 
 async function syncSongFromSpotify(spotifyId: string): Promise<void> {

@@ -44,7 +44,12 @@ function formatTrackDuration(durationMs: number | null): string {
   return `${minutes}:${String(seconds).padStart(2, "0")}`;
 }
 
-async function AlbumDetailsView({ spotifyId }: { spotifyId: string }) {
+async function AlbumDetailsView({
+  params,
+}: {
+  params: Promise<{ spotifyId: string }>;
+}) {
+  const { spotifyId } = await params;
   const [album, session] = await Promise.all([
     getAlbumDetails(spotifyId),
     getCurrentSession(),
@@ -205,11 +210,9 @@ export default async function AlbumPage({
 }: {
   params: Promise<{ spotifyId: string }>;
 }) {
-  const { spotifyId } = await params;
-
   return (
     <Suspense fallback={<AlbumPageFallback />}>
-      <AlbumDetailsView spotifyId={spotifyId} />
+      <AlbumDetailsView params={params} />
     </Suspense>
   );
 }

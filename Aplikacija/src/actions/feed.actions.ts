@@ -1,9 +1,5 @@
 "use server";
 
-import { and, count, eq } from "drizzle-orm";
-import { headers } from "next/headers";
-
-import { db } from "@/db/db";
 import {
   getFollowedActivity,
   getPopularStories,
@@ -11,10 +7,6 @@ import {
   type FollowedActivityRow,
 } from "@/db/queries/feed.queries";
 import { getRecentAlbumActivity } from "@/db/queries/reviews.queries";
-import {
-  criticAlbumReviewLikes,
-  userAlbumReviewLikes,
-} from "@/db/schema";
 import type {
   RecentFeedCursor,
   RecentFeedItem,
@@ -132,100 +124,6 @@ async function mapRecentActivities(
       likedByViewer: false,
       activityLabel,
       targetHref: getTargetHref(row),
-    };
-  });
-}
-
-export async function toggleAlbumReviewLike(reviewId: string): Promise<{
-  liked: boolean;
-  likeCount: number;
-}> {
-  const session = await auth.api.getSession({
-    headers: await headers(),
-  });
-
-  if (!session) {
-    throw new Error("Unauthorized");
-  }
-
-  return db.transaction(async (tx) => {
-    const [existingLike] = await tx
-      .select({ id: userAlbumReviewLikes.id })
-      .from(userAlbumReviewLikes)
-      .where(
-        and(
-          eq(userAlbumReviewLikes.reviewId, reviewId),
-          eq(userAlbumReviewLikes.userId, session.user.id),
-        ),
-      )
-      .limit(1);
-
-    if (existingLike) {
-      await tx
-        .delete(userAlbumReviewLikes)
-        .where(eq(userAlbumReviewLikes.id, existingLike.id));
-    } else {
-      await tx.insert(userAlbumReviewLikes).values({
-        reviewId,
-        userId: session.user.id,
-      });
-    }
-
-    const [countRow] = await tx
-      .select({ value: count() })
-      .from(userAlbumReviewLikes)
-      .where(eq(userAlbumReviewLikes.reviewId, reviewId));
-
-    return {
-      liked: !existingLike,
-      likeCount: Number(countRow?.value ?? 0),
-    };
-  });
-}
-
-export async function toggleCriticAlbumReviewLike(reviewId: string): Promise<{
-  liked: boolean;
-  likeCount: number;
-}> {
-  const session = await auth.api.getSession({
-    headers: await headers(),
-  });
-
-  if (!session) {
-    throw new Error("Unauthorized");
-  }
-
-  return db.transaction(async (tx) => {
-    const [existingLike] = await tx
-      .select({ id: criticAlbumReviewLikes.id })
-      .from(criticAlbumReviewLikes)
-      .where(
-        and(
-          eq(criticAlbumReviewLikes.reviewId, reviewId),
-          eq(criticAlbumReviewLikes.userId, session.user.id),
-        ),
-      )
-      .limit(1);
-
-    if (existingLike) {
-      await tx
-        .delete(criticAlbumReviewLikes)
-        .where(eq(criticAlbumReviewLikes.id, existingLike.id));
-    } else {
-      await tx.insert(criticAlbumReviewLikes).values({
-        reviewId,
-        userId: session.user.id,
-      });
-    }
-
-    const [countRow] = await tx
-      .select({ value: count() })
-      .from(criticAlbumReviewLikes)
-      .where(eq(criticAlbumReviewLikes.reviewId, reviewId));
-
-    return {
-      liked: !existingLike,
-      likeCount: Number(countRow?.value ?? 0),
     };
   });
 }

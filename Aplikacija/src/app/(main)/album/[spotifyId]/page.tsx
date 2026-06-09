@@ -2,8 +2,12 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { Suspense } from "react";
 
-import { getAlbumDetails } from "@/actions/catalog.actions";
+import { getAlbumDetails } from "@/actions/album.actions";
+import { getRecentReviewsForAlbum } from "@/actions/review.actions";
+import { AlbumRecentReviews } from "@/components/album/AlbumRecentReviews";
 import { ReviewForm } from "@/components/album/ReviewForm";
+import { getUserAlbumReviewDraft } from "@/db/queries/catalog.queries";
+import { getCurrentSession } from "@/lib/session";
 
 function AlbumPageFallback() {
   return (
@@ -36,11 +40,19 @@ function formatTrackDuration(durationMs: number | null): string {
 }
 
 async function AlbumDetailsView({ spotifyId }: { spotifyId: string }) {
-  const album = await getAlbumDetails(spotifyId);
+  const [album, session] = await Promise.all([
+    getAlbumDetails(spotifyId),
+    getCurrentSession(),
+  ]);
 
   if (!album) {
     notFound();
   }
+
+  const [existingReview, recentReviews] = await Promise.all([
+    session ? getUserAlbumReviewDraft(album.id, session.user.id) : null,
+    getRecentReviewsForAlbum(album.id, session?.user.id ?? null),
+  ]);
 
   return (
     <main className="min-h-screen bg-[#131313] px-4 py-24 text-white sm:px-6 sm:py-28">
@@ -82,30 +94,28 @@ async function AlbumDetailsView({ spotifyId }: { spotifyId: string }) {
                   </span>
                 </p>
               </div>
-
-              <div className="rounded-[22px] bg-[#211e1e] p-4">
-                <p className="text-[11px] uppercase tracking-[0.28em] text-[#8f7b74]">
-                  Zanrovi
-                </p>
-                <div className="mt-3 flex flex-wrap gap-2">
-                  {album.genres.length > 0 ? (
-                    album.genres.map((genre) => (
-                      <span
-                        key={genre}
-                        className="rounded-full bg-[#181616] px-3 py-1.5 text-xs text-[#e6beb2]"
-                      >
-                        {genre}
-                      </span>
-                    ))
-                  ) : (
-                    <span className="text-sm text-[#8f7b74]">No genres yet.</span>
-                  )}
-                </div>
-              </div>
             </aside>
 
-            <ReviewForm />
+            <div className="space-y-6">
+              {session ? (
+                <ReviewForm
+                  albumId={album.id}
+                  albumSpotifyId={album.spotifyId}
+                  initialLiked={existingReview?.liked ?? false}
+                  initialRating10={existingReview?.rating10 ?? 0}
+                  initialDescription={existingReview?.description ?? ""}
+                  isAuthenticated
+                  redirectUrl={`/album/${album.spotifyId}`}
+                />
+              ) : null}
+            </div>
           </div>
+
+          <AlbumRecentReviews
+            reviews={recentReviews}
+            isAuthenticated={Boolean(session)}
+            redirectUrl={`/album/${album.spotifyId}`}
+          />
 
           <section className="mt-6 rounded-[28px] border border-white/6 bg-[#141313]/88 p-5 sm:mt-8 sm:p-6">
             <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">

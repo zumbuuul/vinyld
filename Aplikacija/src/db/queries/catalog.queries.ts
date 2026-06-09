@@ -1,7 +1,7 @@
-import { asc, eq } from "drizzle-orm";
+import { and, asc, eq } from "drizzle-orm";
 
 import { db } from "@/db/db";
-import { album, albumGenres, genre, song } from "@/db/schema";
+import { album, song, userAlbumReview } from "@/db/schema";
 import type {
   CatalogAlbumDetails,
   CatalogSongDetails,
@@ -31,30 +31,20 @@ export async function getAlbumDetailsFromDb(
     return null;
   }
 
-  const [trackRows, genreRows] = await Promise.all([
-    db
-      .select({
-        id: song.id,
-        spotifyId: song.spotifyId,
-        name: song.name,
-        artistDisplayName: song.artistDisplayName,
-        durationMs: song.durationMs,
-        trackNumber: song.trackNumber,
-        discNumber: song.discNumber,
-        previewUrl: song.previewUrl,
-      })
-      .from(song)
-      .where(eq(song.albumId, albumRow.id))
-      .orderBy(asc(song.discNumber), asc(song.trackNumber), asc(song.name)),
-    db
-      .select({
-        name: genre.name,
-      })
-      .from(albumGenres)
-      .innerJoin(genre, eq(albumGenres.genreId, genre.id))
-      .where(eq(albumGenres.albumId, albumRow.id))
-      .orderBy(asc(genre.name)),
-  ]);
+  const trackRows = await db
+    .select({
+      id: song.id,
+      spotifyId: song.spotifyId,
+      name: song.name,
+      artistDisplayName: song.artistDisplayName,
+      durationMs: song.durationMs,
+      trackNumber: song.trackNumber,
+      discNumber: song.discNumber,
+      previewUrl: song.previewUrl,
+    })
+    .from(song)
+    .where(eq(song.albumId, albumRow.id))
+    .orderBy(asc(song.discNumber), asc(song.trackNumber), asc(song.name));
 
   return {
     id: albumRow.id,
@@ -67,7 +57,6 @@ export async function getAlbumDetailsFromDb(
     albumType: albumRow.albumType,
     totalTracks: albumRow.totalTracks,
     spotifyExternalUrl: albumRow.spotifyExternalUrl,
-    genres: genreRows.map((row) => row.name),
     tracks: trackRows.map((row) => ({
       id: row.id,
       spotifyId: row.spotifyId,
@@ -140,4 +129,38 @@ export async function getAlbumIdBySpotifyId(
     .limit(1);
 
   return row?.id ?? null;
+}
+
+export async function getUserAlbumReviewDraft(
+  albumId: string,
+  userId: string,
+): Promise<{
+  liked: boolean;
+  rating10: number | null;
+  description: string | null;
+} | null> {
+  const [row] = await db
+    .select({
+      liked: userAlbumReview.liked,
+      rating10: userAlbumReview.ocena,
+      description: userAlbumReview.description,
+    })
+    .from(userAlbumReview)
+    .where(
+      and(
+        eq(userAlbumReview.albumId, albumId),
+        eq(userAlbumReview.userId, userId),
+      ),
+    )
+    .limit(1);
+
+  if (!row) {
+    return null;
+  }
+
+  return {
+    liked: Boolean(row.liked),
+    rating10: row.rating10,
+    description: row.description,
+  };
 }

@@ -29,7 +29,6 @@ export type CatalogAlbumDetails = {
   albumType: string | null;
   totalTracks: number | null;
   spotifyExternalUrl: string | null;
-  genres: string[];
   tracks: CatalogTrack[];
 };
 

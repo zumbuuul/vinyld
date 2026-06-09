@@ -37,12 +37,6 @@ export interface SpotifyAlbum {
   };
 }
 
-export interface SpotifyArtistDetails {
-  id: string;
-  name: string;
-  genres: string[];
-}
-
 export interface SpotifyTrack {
   id: string;
   name: string;
@@ -219,16 +213,6 @@ export async function searchSpotifyTracksByName(
       })
     )?.tracks ?? null
   );
-}
-
-export async function getSpotifyArtist(
-  spotifyId: string,
-): Promise<SpotifyArtistDetails | null> {
-  if (!spotifyId) {
-    return null;
-  }
-
-  return spotifyFetch<SpotifyArtistDetails>(`/artists/${spotifyId}`);
 }
 
 export async function getSpotifyTrack(

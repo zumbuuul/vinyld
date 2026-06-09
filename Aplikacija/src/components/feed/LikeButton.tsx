@@ -5,7 +5,7 @@ import { useState, useTransition } from "react";
 import {
   toggleAlbumReviewLike,
   toggleCriticAlbumReviewLike,
-} from "@/actions/feed.actions";
+} from "@/actions/review.actions";
 import { ProtectedAction } from "@/components/ProtectedAction";
 import { Button } from "@/components/ui/button";
 
@@ -42,17 +42,6 @@ export function LikeButton({
   const [isPending, startTransition] = useTransition();
 
   const handleToggle = () => {
-    const previousLiked = liked;
-    const previousLikeCount = likeCount;
-    const optimisticLiked = !previousLiked;
-    const optimisticLikeCount = Math.max(
-      0,
-      previousLikeCount + (optimisticLiked ? 1 : -1),
-    );
-
-    setLiked(optimisticLiked);
-    setLikeCount(optimisticLikeCount);
-
     startTransition(async () => {
       try {
         const result =
@@ -62,8 +51,7 @@ export function LikeButton({
         setLiked(result.liked);
         setLikeCount(result.likeCount);
       } catch {
-        setLiked(previousLiked);
-        setLikeCount(previousLikeCount);
+        return;
       }
     });
   };

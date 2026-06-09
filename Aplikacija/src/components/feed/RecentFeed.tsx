@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useState, useTransition } from "react";
 
+import { ScoreDisplay } from "@/components/feed/ScoreDisplay";
 import { UserAvatar } from "@/components/feed/UserAvatar";
 import type {
   RecentFeedCursor,
@@ -162,6 +163,7 @@ export function RecentFeed({
                         {item.title}
                       </p>
                     ) : null}
+                    <ScoreDisplay rating10={item.rating10} className="mt-4" />
                     <p className="mt-4 text-sm text-[#e6beb2]">
                       {item.summary ?? "Fresh listen added to the feed."}
                     </p>

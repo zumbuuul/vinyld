@@ -17,7 +17,6 @@ import type {
   TrendingReviewItem,
 } from "@/features/feed/feed.types";
 import { auth } from "@/lib/auth";
-import { getSpotifyAlbum } from "@/lib/spotify";
 
 const DEFAULT_RECENT_FEED_PAGE_SIZE = 3;
 
@@ -76,62 +75,51 @@ function getNextCursor(items: RecentFeedItem[]): RecentFeedCursor | null {
 async function mapRecentReviews(limit: number): Promise<TrendingReviewItem[]> {
   const rows = await getRecentAlbumActivity(limit);
 
-  return Promise.all(
-    rows.map(async (row) => {
-      const spotify = await getSpotifyAlbum(row.albumSpotifyId);
-
-      return {
-        id: row.id,
-        reviewType: row.reviewType,
-        userName: row.userName,
-        userImage: row.userImage,
-        albumName: spotify?.name ?? row.albumName,
-        albumArtist: spotify?.artists?.[0]?.name ?? "Unknown Artist",
-        albumSpotifyId: row.albumSpotifyId,
-        albumImageUrl: spotify?.images?.[0]?.url ?? null,
-        excerpt: getExcerpt(row.description),
-        likeCount: row.likeCount,
-      };
-    }),
-  );
+  return rows.map((row) => ({
+    id: row.id,
+    reviewType: row.reviewType,
+    userName: row.userName,
+    userImage: row.userImage,
+    albumName: row.albumName,
+    albumArtist: row.albumArtist ?? "Unknown Artist",
+    albumSpotifyId: row.albumSpotifyId,
+    albumImageUrl: row.albumImageUrl,
+    excerpt: getExcerpt(row.description),
+    rating10: row.rating10,
+    likeCount: row.likeCount,
+  }));
 }
 
 async function mapRecentActivities(
   rows: FollowedActivityRow[],
 ): Promise<RecentFeedItem[]> {
-  return Promise.all(
-    rows.map(async (row) => {
-      const activityLabel = getActivityLabel(row.kind);
+  return rows.map((row) => {
+    const activityLabel = getActivityLabel(row.kind);
 
-      if (row.kind === "review" || row.kind === "critic_review") {
-        const spotify = row.albumSpotifyId
-          ? await getSpotifyAlbum(row.albumSpotifyId)
-          : null;
-
-        return {
-          ...row,
-          albumArtist: spotify?.artists?.[0]?.name ?? "Unknown Artist",
-          albumImageUrl: spotify?.images?.[0]?.url ?? null,
-          albumSpotifyId: row.albumSpotifyId,
-          albumName: spotify?.name ?? row.albumName,
-          activityLabel,
-          targetHref: row.albumSpotifyId
-            ? `/album/${row.albumSpotifyId}`
-            : null,
-        };
-      }
-
+    if (row.kind === "review" || row.kind === "critic_review") {
       return {
         ...row,
-        albumArtist: null,
-        albumImageUrl: null,
-        albumSpotifyId: null,
-        albumName: null,
+        albumArtist: row.albumArtist ?? "Unknown Artist",
+        albumImageUrl: row.albumImageUrl,
+        albumSpotifyId: row.albumSpotifyId,
+        albumName: row.albumName,
+        rating10: row.rating10,
         activityLabel,
-        targetHref: getTargetHref(row),
+        targetHref: row.albumSpotifyId ? `/album/${row.albumSpotifyId}` : null,
       };
-    }),
-  );
+    }
+
+    return {
+      ...row,
+      albumArtist: null,
+      albumImageUrl: null,
+      albumSpotifyId: null,
+      albumName: null,
+      rating10: null,
+      activityLabel,
+      targetHref: getTargetHref(row),
+    };
+  });
 }
 
 export async function getRecentFeedPageForUser(

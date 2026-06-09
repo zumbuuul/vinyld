@@ -19,6 +19,7 @@ export type RecentFeedItem = {
   summary: string | null;
   albumArtist: string | null;
   albumImageUrl: string | null;
+  rating10: number | null;
   activityLabel: string;
   targetHref: string | null;
 };
@@ -33,6 +34,7 @@ export type TrendingReviewItem = {
   albumSpotifyId: string;
   albumImageUrl: string | null;
   excerpt: string;
+  rating10: number | null;
   likeCount: number;
 };
 

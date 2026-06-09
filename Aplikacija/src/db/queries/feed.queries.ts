@@ -27,6 +27,8 @@ export interface FollowedActivityRow {
   createdAt: string;
   albumSpotifyId: string | null;
   albumName: string | null;
+  albumArtist: string | null;
+  albumImageUrl: string | null;
   storyId: string | null;
   storyName: string | null;
   storyImage: string | null;
@@ -35,6 +37,7 @@ export interface FollowedActivityRow {
   targetUserImage: string | null;
   title: string | null;
   summary: string | null;
+  rating10: number | null;
 }
 
 export interface FollowedActivityCursorOptions {
@@ -57,7 +60,6 @@ export async function getPopularStories(
     FROM "Story" s
     JOIN "user" u ON u.id = s.user_id
     LEFT JOIN "Story_Likes" sl ON sl.story_id = s.id
-    WHERE s.date_created >= CURRENT_DATE - INTERVAL '30 days'
     GROUP BY s.id, s.name, s.image, u.name, u.image
     ORDER BY like_count DESC, s.date_created DESC
     LIMIT ${limit}
@@ -90,21 +92,18 @@ export async function getPopularUsers(
       SELECT uar.user_id
       FROM "User_Album_Review_Likes" uarl
       JOIN "User_Album_Review" uar ON uar.id = uarl.review_id
-      WHERE uarl.date_created >= NOW() - INTERVAL '24 hours'
 
       UNION ALL
 
       SELECT usr.user_id
       FROM "User_Song_Review_Likes" usrl
       JOIN "User_Song_Review" usr ON usr.id = usrl.review_id
-      WHERE usrl.date_created >= NOW() - INTERVAL '24 hours'
 
       UNION ALL
 
       SELECT s.user_id
       FROM "Story_Likes" sl
       JOIN "Story" s ON s.id = sl.story_id
-      WHERE sl.date_created >= NOW() - INTERVAL '24 hours'
     ),
     likes_by_user AS (
       SELECT user_id, COUNT(*)::int AS like_count
@@ -162,6 +161,8 @@ export async function getFollowedActivity(
         uar.date_created::timestamp AS created_at,
         a.spotify_id AS album_spotify_id,
         a.name AS album_name,
+        a.artist_display_name AS album_artist,
+        a.image_url AS album_image_url,
         NULL::text AS story_id,
         NULL::text AS story_name,
         NULL::text AS story_image,
@@ -169,7 +170,8 @@ export async function getFollowedActivity(
         NULL::text AS target_user_name,
         NULL::text AS target_user_image,
         NULL::text AS title,
-        uar.description AS summary
+        uar.description AS summary,
+        uar.ocena AS rating10
       FROM "User_Album_Review" uar
       JOIN "user" u ON u.id = uar.user_id
       JOIN followed_users fu ON fu.followed_id = u.id
@@ -187,6 +189,8 @@ export async function getFollowedActivity(
         car.date_created::timestamp AS created_at,
         a.spotify_id AS album_spotify_id,
         a.name AS album_name,
+        a.artist_display_name AS album_artist,
+        a.image_url AS album_image_url,
         NULL::text AS story_id,
         NULL::text AS story_name,
         NULL::text AS story_image,
@@ -194,7 +198,8 @@ export async function getFollowedActivity(
         NULL::text AS target_user_name,
         NULL::text AS target_user_image,
         car.naslov AS title,
-        car.tekst_kritike AS summary
+        car.tekst_kritike AS summary,
+        car.ocena AS rating10
       FROM "Critic_Album_Review" car
       JOIN "user" u ON u.id = car.user_id
       JOIN "UserPreferences" up
@@ -215,6 +220,8 @@ export async function getFollowedActivity(
         s.date_created::timestamp AS created_at,
         NULL::text AS album_spotify_id,
         NULL::text AS album_name,
+        NULL::text AS album_artist,
+        NULL::text AS album_image_url,
         s.id::text AS story_id,
         s.name AS story_name,
         s.image AS story_image,
@@ -222,7 +229,8 @@ export async function getFollowedActivity(
         NULL::text AS target_user_name,
         NULL::text AS target_user_image,
         s.description AS title,
-        s.description AS summary
+        s.description AS summary,
+        NULL::int AS rating10
       FROM "Story" s
       JOIN "user" u ON u.id = s.user_id
       JOIN followed_users fu ON fu.followed_id = u.id
@@ -239,6 +247,8 @@ export async function getFollowedActivity(
         f.date_followed AS created_at,
         NULL::text AS album_spotify_id,
         NULL::text AS album_name,
+        NULL::text AS album_artist,
+        NULL::text AS album_image_url,
         NULL::text AS story_id,
         NULL::text AS story_name,
         NULL::text AS story_image,
@@ -246,7 +256,8 @@ export async function getFollowedActivity(
         target.name AS target_user_name,
         target.image AS target_user_image,
         NULL::text AS title,
-        NULL::text AS summary
+        NULL::text AS summary,
+        NULL::int AS rating10
       FROM "Following" f
       JOIN "user" actor ON actor.id = f.following_id
       JOIN followed_users fu ON fu.followed_id = actor.id
@@ -276,6 +287,8 @@ export async function getFollowedActivity(
     created_at: string;
     album_spotify_id: string | null;
     album_name: string | null;
+    album_artist: string | null;
+    album_image_url: string | null;
     story_id: string | null;
     story_name: string | null;
     story_image: string | null;
@@ -284,6 +297,7 @@ export async function getFollowedActivity(
     target_user_image: string | null;
     title: string | null;
     summary: string | null;
+    rating10: number | null;
   }>;
 
   return rows.map((row) => ({
@@ -295,6 +309,8 @@ export async function getFollowedActivity(
     createdAt: String(row.created_at),
     albumSpotifyId: row.album_spotify_id ? String(row.album_spotify_id) : null,
     albumName: row.album_name ? String(row.album_name) : null,
+    albumArtist: row.album_artist ? String(row.album_artist) : null,
+    albumImageUrl: row.album_image_url ? String(row.album_image_url) : null,
     storyId: row.story_id ? String(row.story_id) : null,
     storyName: row.story_name ? String(row.story_name) : null,
     storyImage: row.story_image ? String(row.story_image) : null,
@@ -305,5 +321,6 @@ export async function getFollowedActivity(
       : null,
     title: row.title ? String(row.title) : null,
     summary: row.summary ? String(row.summary) : null,
+    rating10: row.rating10 === null ? null : Number(row.rating10),
   }));
 }

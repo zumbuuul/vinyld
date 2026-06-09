@@ -1,4 +1,4 @@
-import { and, desc, eq, gte, sql } from "drizzle-orm";
+import { desc, eq, sql } from "drizzle-orm";
 
 import { db } from "@/db/db";
 import {
@@ -14,7 +14,9 @@ export interface RecentAlbumActivityRow {
   userName: string;
   userImage: string | null;
   albumName: string;
+  albumArtist: string | null;
   albumSpotifyId: string;
+  albumImageUrl: string | null;
   albumReleaseYear: number | null;
   description: string | null;
   rating10: number | null;
@@ -32,7 +34,9 @@ export async function getRecentAlbumActivity(
       userName: user.name,
       userImage: user.image,
       albumName: album.name,
+      albumArtist: album.artistDisplayName,
       albumSpotifyId: album.spotifyId,
+      albumImageUrl: album.imageUrl,
       albumReleaseYear: album.godinaIzdavanja,
       description: userAlbumReview.description,
       rating10: userAlbumReview.ocena,
@@ -46,17 +50,14 @@ export async function getRecentAlbumActivity(
       userAlbumReviewLikes,
       eq(userAlbumReviewLikes.reviewId, userAlbumReview.id),
     )
-    .where(
-      and(
-        gte(userAlbumReview.dateCreated, sql`CURRENT_DATE - INTERVAL '7 days'`),
-      ),
-    )
     .groupBy(
       userAlbumReview.id,
       user.name,
       user.image,
       album.name,
+      album.artistDisplayName,
       album.spotifyId,
+      album.imageUrl,
       album.godinaIzdavanja,
       userAlbumReview.description,
       userAlbumReview.ocena,
@@ -74,7 +75,9 @@ export async function getRecentAlbumActivity(
     userName: String(row.userName),
     userImage: row.userImage ? String(row.userImage) : null,
     albumName: String(row.albumName),
+    albumArtist: row.albumArtist ? String(row.albumArtist) : null,
     albumSpotifyId: String(row.albumSpotifyId),
+    albumImageUrl: row.albumImageUrl ? String(row.albumImageUrl) : null,
     albumReleaseYear:
       row.albumReleaseYear === null ? null : Number(row.albumReleaseYear),
     description: row.description ? String(row.description) : null,

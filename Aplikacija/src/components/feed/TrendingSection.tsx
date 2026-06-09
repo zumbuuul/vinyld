@@ -1,5 +1,6 @@
 import Link from "next/link";
 
+import { ScoreDisplay } from "@/components/feed/ScoreDisplay";
 import { UserAvatar } from "@/components/feed/UserAvatar";
 import type { TrendingData } from "@/features/feed/feed.types";
 
@@ -74,12 +75,15 @@ export function TrendingSection({ trending }: { trending: TrendingData }) {
                     <p className="mt-4 text-sm text-[#e6beb2]">
                       {review.excerpt}
                     </p>
-                    <div className="mt-4 flex items-center gap-3 text-xs text-[#e6beb2]">
-                      <UserAvatar
-                        imageUrl={review.userImage}
-                        name={review.userName}
-                      />
-                      <span>{review.userName}</span>
+                    <div className="mt-4 flex items-center justify-between gap-3 text-xs text-[#e6beb2]">
+                      <div className="flex items-center gap-3">
+                        <UserAvatar
+                          imageUrl={review.userImage}
+                          name={review.userName}
+                        />
+                        <span>{review.userName}</span>
+                      </div>
+                      <ScoreDisplay rating10={review.rating10} />
                     </div>
                   </article>
                 ))}

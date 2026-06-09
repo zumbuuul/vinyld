@@ -34,7 +34,8 @@ function isAlbumIngested(albumDetails: CatalogAlbumDetails | null): boolean {
     albumDetails &&
       albumDetails.artistDisplayName &&
       albumDetails.imageUrl &&
-      albumDetails.tracks.length > 0,
+      albumDetails.tracks.length > 0 &&
+      albumDetails.genres.length > 0,
   );
 }
 
@@ -65,13 +66,19 @@ async function syncAlbumFromSpotify(spotifyId: string): Promise<void> {
     spotifyAlbum.artists.map((artist) => artist.name).join(", ") || null;
   const imageUrl = spotifyAlbum.images[0]?.url ?? null;
   const externalUrl = spotifyAlbum.external_urls?.spotify ?? null;
-  const genreNames = Array.from(
-    new Set(
-      (primaryArtist?.genres ?? [])
-        .map((genreName) => genreName.trim())
-        .filter(Boolean),
-    ),
-  );
+  let genreNames: string[] | null = null;
+
+  if (primaryArtist) {
+    const artistGenres = Array.isArray(primaryArtist.genres)
+      ? primaryArtist.genres
+      : [];
+
+    genreNames = Array.from(
+      new Set(
+        artistGenres.map((genreName) => genreName.trim()).filter(Boolean),
+      ),
+    );
+  }
 
   await db.transaction(async (tx) => {
     const [albumRow] = await tx
@@ -143,36 +150,38 @@ async function syncAlbumFromSpotify(spotifyId: string): Promise<void> {
         });
     }
 
-    await tx.delete(albumGenres).where(eq(albumGenres.albumId, albumRow.id));
+    if (genreNames !== null) {
+      await tx.delete(albumGenres).where(eq(albumGenres.albumId, albumRow.id));
 
-    for (const genreName of genreNames) {
-      const [insertedGenre] = await tx
-        .insert(genre)
-        .values({ name: genreName })
-        .onConflictDoNothing()
-        .returning({ id: genre.id });
+      for (const genreName of genreNames) {
+        const [insertedGenre] = await tx
+          .insert(genre)
+          .values({ name: genreName })
+          .onConflictDoNothing()
+          .returning({ id: genre.id });
 
-      const targetGenre =
-        insertedGenre ??
-        (
-          await tx
-            .select({ id: genre.id })
-            .from(genre)
-            .where(eq(genre.name, genreName))
-            .limit(1)
-        )[0];
+        const targetGenre =
+          insertedGenre ??
+          (
+            await tx
+              .select({ id: genre.id })
+              .from(genre)
+              .where(eq(genre.name, genreName))
+              .limit(1)
+          )[0];
 
-      if (!targetGenre) {
-        continue;
+        if (!targetGenre) {
+          continue;
+        }
+
+        await tx
+          .insert(albumGenres)
+          .values({
+            albumId: albumRow.id,
+            genreId: targetGenre.id,
+          })
+          .onConflictDoNothing();
       }
-
-      await tx
-        .insert(albumGenres)
-        .values({
-          albumId: albumRow.id,
-          genreId: targetGenre.id,
-        })
-        .onConflictDoNothing();
     }
   });
 }

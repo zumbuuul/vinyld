@@ -5,8 +5,13 @@ import { Suspense } from "react";
 import { getAlbumDetails } from "@/actions/album.actions";
 import { getRecentReviewsForAlbum } from "@/actions/review.actions";
 import { AlbumRecentReviews } from "@/components/album/AlbumRecentReviews";
+import { CriticReviewForm } from "@/components/album/CriticReviewForm";
 import { ReviewForm } from "@/components/album/ReviewForm";
-import { getUserAlbumReviewDraft } from "@/db/queries/catalog.queries";
+import {
+  getCriticAlbumReviewDraft,
+  getUserAlbumReviewDraft,
+} from "@/db/queries/catalog.queries";
+import { getUserPreferences } from "@/db/queries/users.queries";
 import { getCurrentSession } from "@/lib/session";
 
 function AlbumPageFallback() {
@@ -49,10 +54,15 @@ async function AlbumDetailsView({ spotifyId }: { spotifyId: string }) {
     notFound();
   }
 
-  const [existingReview, recentReviews] = await Promise.all([
-    session ? getUserAlbumReviewDraft(album.id, session.user.id) : null,
+  const [preferences, existingReview, existingCritique, recentReviews] =
+    await Promise.all([
+      session ? getUserPreferences(session.user.id) : null,
+      session ? getUserAlbumReviewDraft(album.id, session.user.id) : null,
+      session ? getCriticAlbumReviewDraft(album.id, session.user.id) : null,
     getRecentReviewsForAlbum(album.id, session?.user.id ?? null),
-  ]);
+    ]);
+
+  const role = preferences?.role ?? null;
 
   return (
     <main className="min-h-screen bg-[#131313] px-4 py-24 text-white sm:px-6 sm:py-28">
@@ -100,13 +110,26 @@ async function AlbumDetailsView({ spotifyId }: { spotifyId: string }) {
             </aside>
 
             <div className="space-y-6">
-              {session ? (
+              {session && role === "user" ? (
                 <ReviewForm
                   albumId={album.id}
                   albumSpotifyId={album.spotifyId}
                   initialLiked={existingReview?.liked ?? false}
                   initialRating10={existingReview?.rating10 ?? 0}
                   initialDescription={existingReview?.description ?? ""}
+                  isAuthenticated
+                  redirectUrl={`/album/${album.spotifyId}`}
+                />
+              ) : null}
+
+              {session && role === "critic" ? (
+                <CriticReviewForm
+                  albumId={album.id}
+                  albumSpotifyId={album.spotifyId}
+                  initialTitle={existingCritique?.title ?? ""}
+                  initialRating10={existingCritique?.rating10 ?? 0}
+                  initialCritiqueText={existingCritique?.critiqueText ?? ""}
+                  initialConclusion={existingCritique?.conclusion ?? ""}
                   isAuthenticated
                   redirectUrl={`/album/${album.spotifyId}`}
                 />

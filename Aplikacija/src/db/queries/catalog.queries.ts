@@ -1,7 +1,7 @@
 import { and, asc, eq } from "drizzle-orm";
 
 import { db } from "@/db/db";
-import { album, song, userAlbumReview } from "@/db/schema";
+import { album, criticAlbumReview, song, userAlbumReview } from "@/db/schema";
 import type {
   CatalogAlbumDetails,
   CatalogSongDetails,
@@ -162,5 +162,42 @@ export async function getUserAlbumReviewDraft(
     liked: Boolean(row.liked),
     rating10: row.rating10,
     description: row.description,
+  };
+}
+
+export async function getCriticAlbumReviewDraft(
+  albumId: string,
+  userId: string,
+): Promise<{
+  title: string;
+  rating10: number;
+  critiqueText: string;
+  conclusion: string | null;
+} | null> {
+  const [row] = await db
+    .select({
+      title: criticAlbumReview.naslov,
+      rating10: criticAlbumReview.ocena,
+      critiqueText: criticAlbumReview.tekstKritike,
+      conclusion: criticAlbumReview.zakljucak,
+    })
+    .from(criticAlbumReview)
+    .where(
+      and(
+        eq(criticAlbumReview.albumId, albumId),
+        eq(criticAlbumReview.userId, userId),
+      ),
+    )
+    .limit(1);
+
+  if (!row) {
+    return null;
+  }
+
+  return {
+    title: String(row.title),
+    rating10: Number(row.rating10),
+    critiqueText: String(row.critiqueText),
+    conclusion: row.conclusion ? String(row.conclusion) : null,
   };
 }

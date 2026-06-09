@@ -5,11 +5,13 @@ import { revalidatePath } from "next/cache";
 import { headers } from "next/headers";
 
 import {
+  getCriticAlbumReviewDraft,
   getAlbumDetailsFromDb,
   getUserAlbumReviewDraft,
 } from "@/db/queries/catalog.queries";
+import { getUserPreferences } from "@/db/queries/users.queries";
 import { db } from "@/db/db";
-import { album, song, userAlbumReview } from "@/db/schema";
+import { album, criticAlbumReview, song, userAlbumReview } from "@/db/schema";
 import type { CatalogAlbumDetails } from "@/features/catalog/catalog.types";
 import { auth } from "@/lib/auth";
 import { getSpotifyAlbum, getSpotifyAlbumTracks } from "@/lib/spotify";
@@ -148,6 +150,12 @@ export async function saveAlbumReview(input: {
     throw new Error("Unauthorized");
   }
 
+  const preferences = await getUserPreferences(session.user.id);
+
+  if (preferences?.role !== "user") {
+    throw new Error("Only users can submit standard album reviews");
+  }
+
   const trimmedDescription = input.description.trim();
   const rating10 = Math.min(10, Math.max(0, Math.round(input.rating10)));
   const existingReview = await getUserAlbumReviewDraft(
@@ -186,5 +194,83 @@ export async function saveAlbumReview(input: {
     liked: input.liked,
     rating10,
     description: trimmedDescription,
+  };
+}
+
+export async function saveCriticAlbumReview(input: {
+  albumId: string;
+  albumSpotifyId: string;
+  title: string;
+  rating10: number;
+  critiqueText: string;
+  conclusion: string;
+}): Promise<{
+  title: string;
+  rating10: number;
+  critiqueText: string;
+  conclusion: string;
+}> {
+  const session = await auth.api.getSession({
+    headers: await headers(),
+  });
+
+  if (!session) {
+    throw new Error("Unauthorized");
+  }
+
+  const preferences = await getUserPreferences(session.user.id);
+
+  if (preferences?.role !== "critic") {
+    throw new Error("Only critics can submit album critiques");
+  }
+
+  const trimmedTitle = input.title.trim();
+  const trimmedCritiqueText = input.critiqueText.trim();
+  const trimmedConclusion = input.conclusion.trim();
+  const rating10 = Math.min(10, Math.max(0, Math.round(input.rating10)));
+
+  if (!trimmedTitle || !trimmedCritiqueText) {
+    throw new Error("Critique title and text are required");
+  }
+
+  const existingReview = await getCriticAlbumReviewDraft(
+    input.albumId,
+    session.user.id,
+  );
+
+  if (!existingReview) {
+    await db.insert(criticAlbumReview).values({
+      albumId: input.albumId,
+      userId: session.user.id,
+      naslov: trimmedTitle,
+      ocena: rating10,
+      tekstKritike: trimmedCritiqueText,
+      zakljucak: trimmedConclusion || null,
+    });
+  } else {
+    await db
+      .update(criticAlbumReview)
+      .set({
+        naslov: trimmedTitle,
+        ocena: rating10,
+        tekstKritike: trimmedCritiqueText,
+        zakljucak: trimmedConclusion || null,
+      })
+      .where(
+        and(
+          eq(criticAlbumReview.albumId, input.albumId),
+          eq(criticAlbumReview.userId, session.user.id),
+        ),
+      );
+  }
+
+  revalidatePath("/");
+  revalidatePath(`/album/${input.albumSpotifyId}`);
+
+  return {
+    title: trimmedTitle,
+    rating10,
+    critiqueText: trimmedCritiqueText,
+    conclusion: trimmedConclusion,
   };
 }

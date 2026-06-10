@@ -259,6 +259,7 @@ export async function updateStoryDetails(
   values: {
     name: string;
     description: string | null;
+    imageUrl?: string;
   },
 ): Promise<void> {
   await db
@@ -266,6 +267,7 @@ export async function updateStoryDetails(
     .set({
       name: values.name,
       description: values.description,
+      ...(values.imageUrl ? { image: values.imageUrl } : {}),
     })
     .where(eq(story.id, storyId));
 }

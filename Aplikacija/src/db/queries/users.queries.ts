@@ -160,6 +160,29 @@ export async function getUserProfileRecord(
   };
 }
 
+export async function updateUserNameRecord(
+  userId: string,
+  name: string,
+): Promise<void> {
+  await db.update(user).set({ name }).where(eq(user.id, userId));
+}
+
+export async function updateUserPreferencesRecord(
+  userId: string,
+  values: {
+    artistBio?: string | null;
+    profilePictureUrl?: string | null;
+  },
+): Promise<void> {
+  await db
+    .update(userPreferences)
+    .set({
+      artistBio: values.artistBio,
+      profilePictureUrl: values.profilePictureUrl,
+    })
+    .where(eq(userPreferences.userId, userId));
+}
+
 export async function getUserStatsRecord(
   userId: string,
 ): Promise<UserStatsRecord> {

@@ -59,12 +59,18 @@ export async function getPopularStories(
       s.name,
       s.image,
       u.name AS user_name,
-      u.image AS user_image,
+      COALESCE((
+        SELECT up.profile_picture_url
+        FROM "UserPreferences" up
+        WHERE up.user_id = u.id
+        ORDER BY up.preference_id DESC
+        LIMIT 1
+      ), u.image) AS user_image,
       COUNT(sl.id)::int AS like_count
     FROM "Story" s
     JOIN "user" u ON u.id = s.user_id
     LEFT JOIN "Story_Likes" sl ON sl.story_id = s.id
-    GROUP BY s.id, s.name, s.image, u.name, u.image
+    GROUP BY s.id, s.user_id, s.name, s.image, u.id, u.name, u.image
     ORDER BY like_count DESC, s.date_created DESC
     LIMIT ${limit}
   `);
@@ -119,7 +125,13 @@ export async function getPopularUsers(
     SELECT
       u.id,
       u.name,
-      u.image,
+      COALESCE((
+        SELECT up2.profile_picture_url
+        FROM "UserPreferences" up2
+        WHERE up2.user_id = u.id
+        ORDER BY up2.preference_id DESC
+        LIMIT 1
+      ), u.image) AS image,
       lbu.like_count
     FROM likes_by_user lbu
     JOIN "user" u ON u.id = lbu.user_id
@@ -163,7 +175,13 @@ export async function getFollowedActivity(
         'review'::text AS kind,
         u.id::text AS actor_id,
         u.name AS actor_name,
-        u.image AS actor_image,
+        COALESCE((
+          SELECT up.profile_picture_url
+          FROM "UserPreferences" up
+          WHERE up.user_id = u.id
+          ORDER BY up.preference_id DESC
+          LIMIT 1
+        ), u.image) AS actor_image,
         uar.date_created::timestamp AS created_at,
         a.spotify_id AS album_spotify_id,
         a.name AS album_name,
@@ -202,7 +220,13 @@ export async function getFollowedActivity(
         'critic_review'::text AS kind,
         u.id::text AS actor_id,
         u.name AS actor_name,
-        u.image AS actor_image,
+        COALESCE((
+          SELECT up.profile_picture_url
+          FROM "UserPreferences" up
+          WHERE up.user_id = u.id
+          ORDER BY up.preference_id DESC
+          LIMIT 1
+        ), u.image) AS actor_image,
         car.date_created::timestamp AS created_at,
         a.spotify_id AS album_spotify_id,
         a.name AS album_name,
@@ -244,7 +268,13 @@ export async function getFollowedActivity(
         'story'::text AS kind,
         u.id::text AS actor_id,
         u.name AS actor_name,
-        u.image AS actor_image,
+        COALESCE((
+          SELECT up.profile_picture_url
+          FROM "UserPreferences" up
+          WHERE up.user_id = u.id
+          ORDER BY up.preference_id DESC
+          LIMIT 1
+        ), u.image) AS actor_image,
         s.date_created::timestamp AS created_at,
         NULL::text AS album_spotify_id,
         NULL::text AS album_name,
@@ -273,7 +303,13 @@ export async function getFollowedActivity(
         'follow'::text AS kind,
         actor.id::text AS actor_id,
         actor.name AS actor_name,
-        actor.image AS actor_image,
+        COALESCE((
+          SELECT up.profile_picture_url
+          FROM "UserPreferences" up
+          WHERE up.user_id = actor.id
+          ORDER BY up.preference_id DESC
+          LIMIT 1
+        ), actor.image) AS actor_image,
         f.date_followed AS created_at,
         NULL::text AS album_spotify_id,
         NULL::text AS album_name,
@@ -284,7 +320,13 @@ export async function getFollowedActivity(
         NULL::text AS story_image,
         target.id::text AS target_user_id,
         target.name AS target_user_name,
-        target.image AS target_user_image,
+        COALESCE((
+          SELECT up.profile_picture_url
+          FROM "UserPreferences" up
+          WHERE up.user_id = target.id
+          ORDER BY up.preference_id DESC
+          LIMIT 1
+        ), target.image) AS target_user_image,
         NULL::text AS title,
         NULL::text AS summary,
         NULL::int AS rating10,

@@ -1,12 +1,27 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { upload } from "@vercel/blob/client";
+import { type ChangeEvent, useRef, useState, useTransition } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 
 import { deleteStoryAction, updateStory } from "@/actions/story.actions";
-import { StoryLikeButton } from "@/components/user/StoryLikeButton";
+import { StoryLikeButton } from "@/components/story/StoryLikeButton";
 import { Button } from "@/components/ui/button";
+
+function buildStoryCoverPath(
+  userId: string,
+  storyId: string,
+  fileName: string,
+): string {
+  const sanitizedName = fileName
+    .trim()
+    .toLowerCase()
+    .replace(/[^a-z0-9.\-_]/g, "-")
+    .replace(/-+/g, "-");
+
+  return `stories/${userId}/${storyId}/${Date.now()}-${sanitizedName || "cover"}`;
+}
 
 export function StoryDetailsPanel({
   isOwner,
@@ -31,8 +46,13 @@ export function StoryDetailsPanel({
   ownerName: string;
 }) {
   const router = useRouter();
+  const fileInputRef = useRef<HTMLInputElement | null>(null);
   const [title, setTitle] = useState(story.name);
   const [description, setDescription] = useState(story.description ?? "");
+  const [imageUrl, setImageUrl] = useState(story.imageUrl);
+  const [previewUrl, setPreviewUrl] = useState(story.imageUrl);
+  const [isUploading, setIsUploading] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState<number | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
 
@@ -41,7 +61,7 @@ export function StoryDetailsPanel({
       <section className="rounded-[32px] bg-[radial-gradient(circle_at_top_left,_rgba(255,116,74,0.12),_transparent_35%),#1c1b1b] p-5 sm:p-8">
         <div className="grid gap-6 lg:grid-cols-[220px_minmax(0,1fr)]">
           <img
-            src={story.imageUrl}
+            src={previewUrl}
             alt={story.name}
             className="aspect-square w-full rounded-2xl object-cover"
           />
@@ -95,6 +115,7 @@ export function StoryDetailsPanel({
           storyId,
           name: title,
           description,
+          imageUrl,
         });
         router.refresh();
       } catch (actionError) {
@@ -105,6 +126,50 @@ export function StoryDetailsPanel({
         );
       }
     });
+  };
+
+  const handleFileChange = async (event: ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+
+    if (!file) {
+      return;
+    }
+
+    setError(null);
+    setIsUploading(true);
+    setUploadProgress(0);
+
+    const temporaryPreviewUrl = URL.createObjectURL(file);
+    setPreviewUrl(temporaryPreviewUrl);
+
+    try {
+      const blob = await upload(
+        buildStoryCoverPath(userId, storyId, file.name),
+        file,
+        {
+          access: "public",
+          handleUploadUrl: "/api/story/cover/upload",
+          onUploadProgress: ({ percentage }) => {
+            setUploadProgress(Math.round(percentage));
+          },
+        },
+      );
+
+      setImageUrl(blob.url);
+      setPreviewUrl(blob.url);
+    } catch (uploadError) {
+      setPreviewUrl(imageUrl);
+      setError(
+        uploadError instanceof Error
+          ? uploadError.message
+          : "Could not upload the story cover right now.",
+      );
+    } finally {
+      setIsUploading(false);
+      setUploadProgress(null);
+      event.target.value = "";
+      URL.revokeObjectURL(temporaryPreviewUrl);
+    }
   };
 
   const handleDeleteStory = () => {
@@ -137,24 +202,46 @@ export function StoryDetailsPanel({
       <div className="grid gap-6 lg:grid-cols-[260px_minmax(0,1fr)]">
         <div className="space-y-4">
           <img
-            src={story.imageUrl}
+            src={previewUrl}
             alt={story.name}
             className="aspect-square w-full rounded-2xl object-cover"
+          />
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept="image/png,image/jpeg,image/webp,image/avif"
+            className="hidden"
+            onChange={handleFileChange}
           />
           <div className="rounded-2xl bg-[#2a2a2a] p-4">
             <p className="text-[11px] uppercase tracking-[0.22em] text-[#8f7b74]">
               Story image
             </p>
             <p className="mt-2 text-sm leading-6 text-[#d7b8ad]">
-              Image replacement will be enabled once Vercel Blob is wired in.
+              Upload a new cover to give this story its own sleeve.
             </p>
             <Button
               variant="outline"
-              disabled
+              type="button"
+              onClick={() => fileInputRef.current?.click()}
+              disabled={isUploading || isPending}
               className="mt-4 w-full border-[#5c4037] text-[#f0d6cd]"
             >
-              Change cover image
+              {isUploading ? "Uploading..." : "Change cover image"}
             </Button>
+            {uploadProgress !== null ? (
+              <div className="mt-4">
+                <div className="h-2 rounded-full bg-[#131313]">
+                  <div
+                    className="h-2 rounded-full bg-[linear-gradient(135deg,#ffb59e,#ff5717)] transition-all"
+                    style={{ width: `${uploadProgress}%` }}
+                  />
+                </div>
+                <p className="mt-2 text-sm text-[#d7b8ad]">
+                  {uploadProgress}% uploaded
+                </p>
+              </div>
+            ) : null}
           </div>
         </div>
 
@@ -222,7 +309,7 @@ export function StoryDetailsPanel({
                 </Button>
                 <Button
                   onClick={handleUpdateStory}
-                  disabled={isPending}
+                  disabled={isPending || isUploading}
                   className="w-full bg-[linear-gradient(135deg,#ffb59e,#ff5717)] text-[#521300] hover:opacity-95 sm:w-auto"
                 >
                   {isPending ? "Updating..." : "Update Story"}

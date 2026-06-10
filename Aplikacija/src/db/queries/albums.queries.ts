@@ -542,6 +542,13 @@ export async function getUserAlbumReviews(
   const likedByCurrentUserExpression = currentUserId
     ? sql<boolean>`coalesce(bool_or(${userAlbumReviewLikes.userId} = ${currentUserId}), false)`
     : sql<boolean>`false`;
+  const resolvedUserImage = sql<string | null>`COALESCE((
+    SELECT up.profile_picture_url
+    FROM "UserPreferences" up
+    WHERE up.user_id = ${user.id}
+    ORDER BY up.preference_id DESC
+    LIMIT 1
+  ), ${user.image})`;
 
   const rows = await db
     .select({
@@ -549,7 +556,7 @@ export async function getUserAlbumReviews(
       albumId: userAlbumReview.albumId,
       userId: userAlbumReview.userId,
       userName: user.name,
-      userImage: user.image,
+      userImage: resolvedUserImage,
       ocena: userAlbumReview.ocena,
       liked: userAlbumReview.liked,
       description: userAlbumReview.description,
@@ -569,6 +576,7 @@ export async function getUserAlbumReviews(
       userAlbumReview.albumId,
       userAlbumReview.userId,
       user.name,
+      user.id,
       user.image,
       userAlbumReview.ocena,
       userAlbumReview.liked,
@@ -773,6 +781,13 @@ export async function getCriticAlbumReviews(
   const likedByCurrentUserExpression = currentUserId
     ? sql<boolean>`coalesce(bool_or(${criticAlbumReviewLikes.userId} = ${currentUserId}), false)`
     : sql<boolean>`false`;
+  const resolvedUserImage = sql<string | null>`COALESCE((
+    SELECT up.profile_picture_url
+    FROM "UserPreferences" up
+    WHERE up.user_id = ${user.id}
+    ORDER BY up.preference_id DESC
+    LIMIT 1
+  ), ${user.image})`;
 
   const rows = await db
     .select({
@@ -780,7 +795,7 @@ export async function getCriticAlbumReviews(
       albumId: criticAlbumReview.albumId,
       userId: criticAlbumReview.userId,
       userName: user.name,
-      userImage: user.image,
+      userImage: resolvedUserImage,
       naslov: criticAlbumReview.naslov,
       ocena: criticAlbumReview.ocena,
       tekstKritike: criticAlbumReview.tekstKritike,
@@ -801,6 +816,7 @@ export async function getCriticAlbumReviews(
       criticAlbumReview.albumId,
       criticAlbumReview.userId,
       user.name,
+      user.id,
       user.image,
       criticAlbumReview.naslov,
       criticAlbumReview.ocena,

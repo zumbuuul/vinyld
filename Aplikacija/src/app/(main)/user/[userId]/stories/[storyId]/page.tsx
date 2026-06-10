@@ -3,13 +3,10 @@ import { notFound } from "next/navigation";
 import { Suspense } from "react";
 
 import { getStorySongs } from "@/actions/story.actions";
-import {
-  getStoryById,
-  isStoryLikedByUser,
-} from "@/db/queries/stories.queries";
+import { getStoryById, isStoryLikedByUser } from "@/db/queries/stories.queries";
 import { getUserProfile } from "@/actions/user.actions";
-import { StoryDetailsPanel } from "@/components/user/StoryDetailsPanel";
-import { StorySongList } from "@/components/user/StorySongList";
+import { StoryDetailsPanel } from "@/components/story/StoryDetailsPanel";
+import { StorySongList } from "@/components/story/StorySongList";
 import { getCurrentSession } from "@/lib/session";
 
 function StoryDetailsFallback() {

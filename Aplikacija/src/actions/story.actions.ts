@@ -43,6 +43,7 @@ const updateStoryInputSchema = z.object({
   storyId: z.string().trim().min(1),
   name: z.string().trim().min(1, "Story title is required").max(64),
   description: z.string().trim().max(500).optional().default(""),
+  imageUrl: z.string().trim().url().max(2048).optional().nullable(),
 });
 
 export type StoryActionResult<T = null> =
@@ -265,6 +266,7 @@ export async function updateStory(input: {
   storyId: string;
   name: string;
   description: string;
+  imageUrl?: string | null;
 }): Promise<{ success: true }> {
   const parsed = updateStoryInputSchema.parse(input);
   const sessionUserId = await requireSessionUserId();
@@ -286,6 +288,7 @@ export async function updateStory(input: {
   await updateStoryDetails(parsed.storyId, {
     name: parsed.name,
     description: parsed.description.trim() || null,
+    imageUrl: parsed.imageUrl?.trim() || undefined,
   });
 
   revalidatePath(`/user/${parsed.userId}/stories`);

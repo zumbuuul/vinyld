@@ -29,12 +29,20 @@ export async function getRecentAlbumActivity(
   limit: number,
   viewerId?: string | null,
 ): Promise<RecentAlbumActivityRow[]> {
+  const resolvedUserImage = sql<string | null>`COALESCE((
+    SELECT up.profile_picture_url
+    FROM "UserPreferences" up
+    WHERE up.user_id = ${user.id}
+    ORDER BY up.preference_id DESC
+    LIMIT 1
+  ), ${user.image})`;
+
   const rows = await db
     .select({
       id: userAlbumReview.id,
       reviewType: sql<"user">`'user'`,
       userName: user.name,
-      userImage: user.image,
+      userImage: resolvedUserImage,
       albumName: album.name,
       albumArtist: album.artistDisplayName,
       albumSpotifyId: album.spotifyId,
@@ -58,6 +66,7 @@ export async function getRecentAlbumActivity(
     .groupBy(
       userAlbumReview.id,
       user.name,
+      user.id,
       user.image,
       album.name,
       album.artistDisplayName,

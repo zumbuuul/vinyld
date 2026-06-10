@@ -94,6 +94,7 @@ export function TrendingSection({
                         <UserAvatar
                           imageUrl={review.userImage}
                           name={review.userName}
+                          size="md"
                         />
                         <span>{review.userName}</span>
                       </div>
@@ -151,9 +152,17 @@ export function TrendingSection({
                         <UserAvatar
                           imageUrl={story.userImage}
                           name={story.userName}
-                          size="sm"
+                          size="md"
                         />
-                        <span>{story.userName}</span>
+                        <span>
+                          By{" "}
+                          <Link
+                            className="text-white"
+                            href={`/user/${story.userId}`}
+                          >
+                            {story.userName}
+                          </Link>{" "}
+                        </span>
                       </div>
                       <span>{story.likeCount} likes</span>
                     </div>
@@ -188,7 +197,7 @@ export function TrendingSection({
                         <UserAvatar
                           imageUrl={user.imageUrl}
                           name={user.name}
-                          size="lg"
+                          size="md"
                         />
                         <div>
                           <p className="text-sm font-semibold text-white">

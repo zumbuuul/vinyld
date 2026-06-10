@@ -40,6 +40,14 @@ export async function getUserRecentReviews(
   viewerId?: string | null,
   limit = 5,
 ): Promise<AlbumReviewListItemRow[]> {
+  const resolvedUserImage = sql<string | null>`COALESCE((
+    SELECT up.profile_picture_url
+    FROM "UserPreferences" up
+    WHERE up.user_id = ${user.id}
+    ORDER BY up.preference_id DESC
+    LIMIT 1
+  ), ${user.image})`;
+
   const albumReviewRows = await db
     .select({
       id: userAlbumReview.id,
@@ -50,7 +58,7 @@ export async function getUserRecentReviews(
       targetSecondaryText: album.artistDisplayName,
       reviewType: sql<"user">`'user'`,
       userName: user.name,
-      userImage: user.image,
+      userImage: resolvedUserImage,
       title: sql<string | null>`NULL`,
       description: userAlbumReview.description,
       conclusion: sql<string | null>`NULL`,
@@ -77,6 +85,7 @@ export async function getUserRecentReviews(
       album.imageUrl,
       album.artistDisplayName,
       user.name,
+      user.id,
       user.image,
       userAlbumReview.description,
       userAlbumReview.ocena,
@@ -94,7 +103,7 @@ export async function getUserRecentReviews(
       targetSecondaryText: sql<string | null>`COALESCE(${song.artistDisplayName}, ${album.artistDisplayName}, ${album.name})`,
       reviewType: sql<"user">`'user'`,
       userName: user.name,
-      userImage: user.image,
+      userImage: resolvedUserImage,
       title: sql<string | null>`NULL`,
       description: userSongReview.description,
       conclusion: sql<string | null>`NULL`,
@@ -124,6 +133,7 @@ export async function getUserRecentReviews(
       album.artistDisplayName,
       album.name,
       user.name,
+      user.id,
       user.image,
       userSongReview.description,
       userSongReview.ocena,
@@ -141,7 +151,7 @@ export async function getUserRecentReviews(
       targetSecondaryText: album.artistDisplayName,
       reviewType: sql<"critic">`'critic'`,
       userName: user.name,
-      userImage: user.image,
+      userImage: resolvedUserImage,
       title: criticAlbumReview.naslov,
       description: criticAlbumReview.tekstKritike,
       conclusion: criticAlbumReview.zakljucak,
@@ -168,6 +178,7 @@ export async function getUserRecentReviews(
       album.imageUrl,
       album.artistDisplayName,
       user.name,
+      user.id,
       user.image,
       criticAlbumReview.naslov,
       criticAlbumReview.tekstKritike,
@@ -186,7 +197,7 @@ export async function getUserRecentReviews(
       targetSecondaryText: sql<string | null>`COALESCE(${song.artistDisplayName}, ${album.artistDisplayName}, ${album.name})`,
       reviewType: sql<"critic">`'critic'`,
       userName: user.name,
-      userImage: user.image,
+      userImage: resolvedUserImage,
       title: criticSongReview.naslov,
       description: criticSongReview.tekstKritike,
       conclusion: criticSongReview.zakljucak,
@@ -216,6 +227,7 @@ export async function getUserRecentReviews(
       album.artistDisplayName,
       album.name,
       user.name,
+      user.id,
       user.image,
       criticSongReview.naslov,
       criticSongReview.tekstKritike,

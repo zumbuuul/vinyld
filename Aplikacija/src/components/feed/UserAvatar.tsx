@@ -20,7 +20,7 @@ export function UserAvatar({
   size?: "sm" | "md" | "lg";
 }) {
   const sizeClass =
-    size === "sm" ? "h-7 w-7" : size === "lg" ? "h-10 w-10" : "h-8 w-8";
+    size === "sm" ? "h-7 w-7" : size === "lg" ? "h-25 w-25" : "h-8 w-8";
   const textClass = size === "lg" ? "text-xs" : "text-[10px]";
 
   if (imageUrl) {

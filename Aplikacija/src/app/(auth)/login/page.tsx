@@ -1,3 +1,4 @@
+import { Suspense } from "react";
 import { redirect } from "next/navigation";
 
 import { LoginForm } from "@/components/auth/LoginForm";
@@ -23,7 +24,11 @@ function resolveRedirectUrl(redirectUrl?: string): string {
   return redirectUrl;
 }
 
-export default async function LoginPage({ searchParams }: LoginPageProps) {
+function LoginPageFallback() {
+  return null;
+}
+
+async function LoginPageView({ searchParams }: LoginPageProps) {
   const params = (await searchParams) ?? {};
   const redirectUrl = resolveRedirectUrl(params.redirectUrl);
 
@@ -34,4 +39,12 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
   }
 
   return <LoginForm redirectUrl={redirectUrl} />;
+}
+
+export default function LoginPage({ searchParams }: LoginPageProps) {
+  return (
+    <Suspense fallback={<LoginPageFallback />}>
+      <LoginPageView searchParams={searchParams} />
+    </Suspense>
+  );
 }

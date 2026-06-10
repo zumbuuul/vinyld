@@ -5,15 +5,6 @@ import { headers } from "next/headers";
 import { z } from "zod";
 
 import {
-  getAlbumBySpotifyId,
-  getGenreByName,
-  getSongBySpotifyId,
-  insertAlbum,
-  insertGenre,
-  insertSong,
-  linkAlbumGenre,
-} from "@/db/queries/albums.queries";
-import {
   deleteStoryLike,
   deleteStory,
   deleteStorySong,
@@ -32,10 +23,9 @@ import {
 import { getUserById } from "@/db/queries/users.queries";
 import type { UserStoryListItem } from "@/features/album/album.types";
 import { auth } from "@/lib/auth";
-import { getSpotifyAlbum, getSpotifyTrack } from "@/lib/spotify";
 
 const storyIdSchema = z.string().trim().min(1).max(64);
-const spotifyIdSchema = z.string().trim().min(1).max(64);
+const songIdSchema = z.string().trim().min(1);
 const userIdSchema = z.string().trim().min(1);
 const pageSchema = z.coerce.number().int().min(1);
 const updateStoryInputSchema = z.object({
@@ -70,20 +60,6 @@ function fail<T>(error: string): StoryActionResult<T> {
   };
 }
 
-function getReleaseYearFromDate(value: string | undefined, fallback: number): number {
-  if (!value) {
-    return fallback;
-  }
-
-  const year = Number.parseInt(value.slice(0, 4), 10);
-
-  if (Number.isNaN(year)) {
-    return fallback;
-  }
-
-  return year;
-}
-
 async function requireSessionUserId(): Promise<string> {
   const session = await auth.api.getSession({
     headers: await headers(),
@@ -94,86 +70,6 @@ async function requireSessionUserId(): Promise<string> {
   }
 
   return session.user.id;
-}
-
-async function ensureSongExists(spotifyId: string): Promise<{ id: string }> {
-  const existingSong = await getSongBySpotifyId(spotifyId);
-
-  if (existingSong) {
-    return { id: existingSong.id };
-  }
-
-  const spotifyTrack = await getSpotifyTrack(spotifyId);
-
-  if (!spotifyTrack) {
-    throw new Error("Song not found on Spotify.");
-  }
-
-  let albumRecord = await getAlbumBySpotifyId(spotifyTrack.album.id);
-  const spotifyAlbum = await getSpotifyAlbum(spotifyTrack.album.id);
-
-  if (!albumRecord) {
-    if (!spotifyAlbum) {
-      albumRecord = await insertAlbum({
-        name: spotifyTrack.album.name,
-        releaseYear: 0,
-        spotifyId: spotifyTrack.album.id,
-      });
-    } else {
-      albumRecord = await insertAlbum({
-        name: spotifyAlbum.name,
-        releaseYear: getReleaseYearFromDate(spotifyAlbum.release_date, 0),
-        spotifyId: spotifyTrack.album.id,
-      });
-    }
-  }
-
-  if (spotifyAlbum) {
-    for (const track of spotifyAlbum.tracks?.items ?? []) {
-      if (!track.id) {
-        continue;
-      }
-
-      const existingTrack = await getSongBySpotifyId(track.id);
-
-      if (existingTrack) {
-        continue;
-      }
-
-      await insertSong({
-        albumId: albumRecord.id,
-        name: track.name,
-        spotifyId: track.id,
-      });
-    }
-
-    for (const genreName of spotifyAlbum.genres ?? []) {
-      const trimmed = genreName.trim();
-
-      if (!trimmed) {
-        continue;
-      }
-
-      const existingGenre = await getGenreByName(trimmed);
-      const genreRecord = existingGenre ?? (await insertGenre(trimmed));
-
-      await linkAlbumGenre(albumRecord.id, genreRecord.id);
-    }
-  } else {
-    await insertSong({
-      albumId: albumRecord.id,
-      name: spotifyTrack.name,
-      spotifyId: spotifyTrack.id,
-    });
-  }
-
-  const resolvedSong = await getSongBySpotifyId(spotifyId);
-
-  if (!resolvedSong) {
-    throw new Error("Failed to persist song.");
-  }
-
-  return { id: resolvedSong.id };
 }
 
 export async function getUserStories(
@@ -299,11 +195,11 @@ export async function updateStory(input: {
 
 export async function addSongToStory(
   storyId: string,
-  spotifyId: string,
+  songId: string,
 ): Promise<StoryActionResult<null>> {
   try {
     const parsedStoryId = storyIdSchema.parse(storyId);
-    const parsedSpotifyId = spotifyIdSchema.parse(spotifyId);
+    const parsedSongId = songIdSchema.parse(songId);
 
     const sessionUserId = await requireSessionUserId();
     const storyRecord = await getStoryById(parsedStoryId);
@@ -316,14 +212,13 @@ export async function addSongToStory(
       return fail("Only the playlist owner can add songs.");
     }
 
-    const songRecord = await ensureSongExists(parsedSpotifyId);
-    const alreadyInStory = await isSongInStory(parsedStoryId, songRecord.id);
+    const alreadyInStory = await isSongInStory(parsedStoryId, parsedSongId);
 
     if (alreadyInStory) {
       return fail("Song is already in this playlist.");
     }
 
-    await insertStorySong(parsedStoryId, songRecord.id);
+    await insertStorySong(parsedStoryId, parsedSongId);
 
     revalidatePath(`/user/${sessionUserId}/stories/${parsedStoryId}`);
     revalidatePath(`/user/${sessionUserId}/stories`);

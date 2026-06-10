@@ -11,13 +11,13 @@ import { Skeleton } from "@/components/ui/skeleton";
 import type { UserStoryListItem } from "@/features/album/album.types";
 
 export function AddToPlaylistPopover({
-  songSpotifyId,
+  songId,
   triggerLabel = "Add to story",
   triggerVariant = "outline",
   triggerSize = "default",
   className,
 }: {
-  songSpotifyId: string;
+  songId: string;
   triggerLabel?: string;
   triggerVariant?: "default" | "outline" | "ghost";
   triggerSize?: "default" | "sm" | "icon";
@@ -54,7 +54,7 @@ export function AddToPlaylistPopover({
     setError(null);
 
     startSubmitting(async () => {
-      const result = await addSongToStory(storyId, songSpotifyId);
+      const result = await addSongToStory(storyId, songId);
 
       if (!result.success) {
         setError(result.error);

@@ -207,7 +207,7 @@ async function AlbumDetailsView({
 
                         {session ? (
                           <AddToPlaylistPopover
-                            songSpotifyId={track.spotifyId}
+                            songId={track.id}
                             triggerLabel="+"
                             triggerVariant="ghost"
                             triggerSize="icon"

@@ -136,7 +136,7 @@ async function SongDetailsView({
                 {session ? (
                   <div className="mt-5">
                     <AddToPlaylistPopover
-                      songSpotifyId={song.spotifyId}
+                      songId={song.id}
                       triggerLabel="Add to story"
                     />
                   </div>

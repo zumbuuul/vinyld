@@ -33,6 +33,8 @@ export type PendingRoleRequestsRecord = {
   admin: boolean;
 };
 
+export type RoleRequestKey = "critic" | "artist" | "admin";
+
 export async function isUserFollowedByViewer(
   userId: string,
   viewerId: string,
@@ -281,4 +283,52 @@ export async function getPendingRoleRequestsRecord(
   }
 
   return pending;
+}
+
+export async function getPendingRoleRequestByRole(
+  userId: string,
+  requestedRole: RoleRequestKey,
+): Promise<{ id: string } | null> {
+  const [row] = await db
+    .select({
+      id: roleRequest.id,
+    })
+    .from(roleRequest)
+    .where(
+      and(
+        eq(roleRequest.userId, userId),
+        eq(roleRequest.requestedRole, requestedRole),
+        eq(roleRequest.status, "pending"),
+      ),
+    )
+    .orderBy(desc(roleRequest.dateCreated))
+    .limit(1);
+
+  if (!row) {
+    return null;
+  }
+
+  return { id: String(row.id) };
+}
+
+export async function insertRoleRequestRecord(values: {
+  userId: string;
+  requestedRole: RoleRequestKey;
+  obrazlozenje: string;
+}): Promise<void> {
+  await db.insert(roleRequest).values({
+    userId: values.userId,
+    requestedRole: values.requestedRole,
+    obrazlozenje: values.obrazlozenje,
+    status: "pending",
+  });
+}
+
+export async function cancelRoleRequestRecord(requestId: string): Promise<void> {
+  await db
+    .update(roleRequest)
+    .set({
+      status: "rejected",
+    })
+    .where(eq(roleRequest.id, requestId));
 }

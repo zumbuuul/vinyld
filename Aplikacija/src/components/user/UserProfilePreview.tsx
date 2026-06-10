@@ -11,6 +11,7 @@ import { Button } from "@/components/ui/button";
 import { ArtistBioSection } from "@/components/user/ArtistBioSection";
 import { BeginStoryButton } from "@/components/story/BeginStoryButton";
 import { FollowButton } from "@/components/user/FollowButton";
+import { RoleRequestModal } from "@/components/user/RoleRequestModal";
 import { StoryCard } from "@/components/story/StoryCard";
 import type { UserStoryListItem } from "@/features/album/album.types";
 
@@ -19,12 +20,6 @@ type RoleRequestKey = "critic" | "artist" | "admin";
 
 const ROLE_LABELS: Record<UserRole, string> = {
   user: "Listener",
-  critic: "Critic",
-  artist: "Artist",
-  admin: "Admin",
-};
-
-const REQUEST_LABELS: Record<RoleRequestKey, string> = {
   critic: "Critic",
   artist: "Artist",
   admin: "Admin",
@@ -91,29 +86,6 @@ function NowSpinningPlaceholder() {
   );
 }
 
-function RoleRequestButton({
-  role,
-  requested,
-}: {
-  role: RoleRequestKey;
-  requested: boolean;
-}) {
-  return (
-    <Button
-      variant={requested ? "outline" : "default"}
-      className={
-        requested
-          ? "border-[#5c4037] text-[#f0d6cd]"
-          : "bg-[linear-gradient(135deg,#ffb59e,#ff5717)] text-[#521300] hover:opacity-95"
-      }
-    >
-      {requested
-        ? `Cancel Request ${REQUEST_LABELS[role]}`
-        : `Request ${REQUEST_LABELS[role]}`}
-    </Button>
-  );
-}
-
 export function UserProfilePreview({
   isOwnProfile,
   isAuthenticated,
@@ -152,6 +124,8 @@ export function UserProfilePreview({
   const requestButtons = (["critic", "artist", "admin"] as const).filter(
     (requestRole) => role !== requestRole,
   );
+  const hasAnyPendingRequest =
+    pendingRequests.critic || pendingRequests.artist || pendingRequests.admin;
 
   return (
     <main className="min-h-screen bg-[#131313] px-4 py-24 text-white sm:px-6 sm:py-28">
@@ -284,10 +258,13 @@ export function UserProfilePreview({
                 </p>
                 <div className="mt-5 flex flex-col gap-3">
                   {requestButtons.map((requestRole) => (
-                    <RoleRequestButton
+                    <RoleRequestModal
                       key={requestRole}
                       role={requestRole}
                       requested={pendingRequests[requestRole]}
+                      disabled={
+                        hasAnyPendingRequest && !pendingRequests[requestRole]
+                      }
                     />
                   ))}
                 </div>

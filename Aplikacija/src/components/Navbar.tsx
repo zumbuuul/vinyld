@@ -25,6 +25,7 @@ type NavbarProps = {
 export default function Navbar({ viewer }: NavbarProps) {
   const pathname = usePathname();
   const [menuOpen, setMenuOpen] = useState(false);
+  const [searchExpanded, setSearchExpanded] = useState(false);
   const menuRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
@@ -79,10 +80,17 @@ export default function Navbar({ viewer }: NavbarProps) {
             ))}
           </div>
         </div>
-        <div className="flex items-center gap-3">
-          <NavbarSearch />
+        <div
+          className={`flex items-center gap-3 ${
+            searchExpanded ? "w-full sm:w-auto" : ""
+          }`}
+        >
+          <NavbarSearch onMobileExpandedChange={setSearchExpanded} />
           {viewer ? (
-            <div className="relative" ref={menuRef}>
+            <div
+              className={`relative ${searchExpanded ? "hidden sm:block" : ""}`}
+              ref={menuRef}
+            >
               <button
                 type="button"
                 onClick={() => setMenuOpen((prev) => !prev)}
@@ -133,7 +141,9 @@ export default function Navbar({ viewer }: NavbarProps) {
           ) : (
             <Link
               href="/register"
-              className="rounded-md bg-linear-to-r from-[#ffb59e] to-[#ff5717] px-4 py-2 text-sm font-serif font-semibold text-[#521300]"
+              className={`rounded-md bg-linear-to-r from-[#ffb59e] to-[#ff5717] px-4 py-2 text-sm font-serif font-semibold text-[#521300] ${
+                searchExpanded ? "hidden sm:inline-flex" : ""
+              }`}
             >
               Join the Club
             </Link>

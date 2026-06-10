@@ -6,14 +6,23 @@ import { useEffect, useRef, useState } from "react";
 import { searchCatalog } from "@/actions/catalog.actions";
 import type { CatalogSearchResult } from "@/features/catalog/catalog.types";
 
-export function NavbarSearch() {
+export function NavbarSearch({
+  onMobileExpandedChange,
+}: {
+  onMobileExpandedChange?: (expanded: boolean) => void;
+}) {
   const [searchQuery, setSearchQuery] = useState("");
   const [searchResults, setSearchResults] = useState<CatalogSearchResult[]>([]);
   const [searchOpen, setSearchOpen] = useState(false);
+  const [mobileExpanded, setMobileExpanded] = useState(false);
   const [isSearching, setIsSearching] = useState(false);
   const [searchError, setSearchError] = useState<string | null>(null);
   const searchRef = useRef<HTMLDivElement | null>(null);
   const searchRequestId = useRef(0);
+
+  useEffect(() => {
+    onMobileExpandedChange?.(mobileExpanded);
+  }, [mobileExpanded, onMobileExpandedChange]);
 
   useEffect(() => {
     if (!searchOpen) {
@@ -23,6 +32,7 @@ export function NavbarSearch() {
     const handleClick = (event: MouseEvent) => {
       if (!searchRef.current?.contains(event.target as Node)) {
         setSearchOpen(false);
+        setMobileExpanded(false);
       }
     };
 
@@ -74,24 +84,49 @@ export function NavbarSearch() {
   }, [searchQuery]);
 
   return (
-    <div className="relative" ref={searchRef}>
-      <div className="flex h-9 items-center gap-2 rounded-full bg-white/5 px-3 text-white/70">
-        <svg
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="currentColor"
-          strokeWidth="1.8"
-          className="h-4 w-4"
-          aria-hidden="true"
+    <div
+      className={`relative ${mobileExpanded ? "w-full sm:w-auto" : ""}`}
+      ref={searchRef}
+    >
+      <div
+        className={`flex h-9 items-center gap-2 rounded-full bg-white/5 px-3 text-white/70 transition-all ${
+          mobileExpanded ? "w-full sm:w-40" : "w-auto sm:w-auto"
+        }`}
+      >
+        <button
+          type="button"
+          onClick={() => {
+            setMobileExpanded(true);
+            if (
+              searchResults.length > 0 ||
+              isSearching ||
+              searchError ||
+              searchQuery.trim()
+            ) {
+              setSearchOpen(true);
+            }
+          }}
+          className="shrink-0"
+          aria-label="Open search"
         >
-          <circle cx="11" cy="11" r="7" />
-          <line x1="16.65" y1="16.65" x2="21" y2="21" />
-        </svg>
+          <svg
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="1.8"
+            className="h-4 w-4"
+            aria-hidden="true"
+          >
+            <circle cx="11" cy="11" r="7" />
+            <line x1="16.65" y1="16.65" x2="21" y2="21" />
+          </svg>
+        </button>
         <input
           type="text"
           value={searchQuery}
           onChange={(event) => setSearchQuery(event.target.value)}
           onFocus={() => {
+            setMobileExpanded(true);
             if (
               searchResults.length > 0 ||
               isSearching ||
@@ -102,11 +137,25 @@ export function NavbarSearch() {
             }
           }}
           placeholder="Search albums and songs"
-          className="hidden w-40 bg-transparent text-xs text-white/80 placeholder:text-white/40 focus:outline-none sm:block"
+          className={`bg-transparent text-xs text-white/80 placeholder:text-white/40 focus:outline-none ${
+            mobileExpanded ? "block w-full sm:w-40" : "hidden sm:block sm:w-40"
+          }`}
         />
+        {mobileExpanded ? (
+          <button
+            type="button"
+            onClick={() => {
+              setMobileExpanded(false);
+              setSearchOpen(false);
+            }}
+            className="text-[10px] uppercase tracking-[0.18em] text-white/40 sm:hidden"
+          >
+            Close
+          </button>
+        ) : null}
       </div>
       {searchOpen ? (
-        <div className="absolute right-0 mt-3 w-[26rem] max-w-[calc(100vw-3rem)] overflow-hidden rounded-2xl border border-white/10 bg-[#1c1b1b] shadow-[0_24px_60px_-20px_rgba(0,0,0,0.8)]">
+        <div className="absolute right-0 mt-3 w-[26rem] max-w-[calc(100vw-3rem)] overflow-hidden rounded-2xl border border-white/10 bg-[#1c1b1b] shadow-[0_24px_60px_-20px_rgba(0,0,0,0.8)] sm:right-0">
           <div className="border-b border-white/5 px-4 py-3 text-[11px] uppercase tracking-[0.2em] text-[#e6beb2]">
             Search results
           </div>

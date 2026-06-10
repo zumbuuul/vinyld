@@ -21,6 +21,7 @@ import {
   insertStory,
   insertStorySong,
   isSongInStory,
+  updateStoryDetails,
 } from "@/db/queries/stories.queries";
 import { getUserById } from "@/db/queries/users.queries";
 import type { UserStoryListItem } from "@/features/album/album.types";
@@ -31,6 +32,12 @@ const storyIdSchema = z.string().trim().min(1).max(64);
 const spotifyIdSchema = z.string().trim().min(1).max(64);
 const userIdSchema = z.string().trim().min(1);
 const pageSchema = z.coerce.number().int().min(1);
+const updateStoryInputSchema = z.object({
+  userId: z.string().trim().min(1),
+  storyId: z.string().trim().min(1),
+  name: z.string().trim().min(1, "Story title is required").max(64),
+  description: z.string().trim().max(500).optional().default(""),
+});
 
 export type StoryActionResult<T = null> =
   | {
@@ -232,6 +239,40 @@ export async function beginNewStory(): Promise<{ storyId: string; userId: string
     storyId: createdStory.id,
     userId: sessionUserId,
   };
+}
+
+export async function updateStory(input: {
+  userId: string;
+  storyId: string;
+  name: string;
+  description: string;
+}): Promise<{ success: true }> {
+  const parsed = updateStoryInputSchema.parse(input);
+  const sessionUserId = await requireSessionUserId();
+
+  if (sessionUserId !== parsed.userId) {
+    throw new Error("Unauthorized");
+  }
+
+  const storyRecord = await getStoryById(parsed.storyId);
+
+  if (!storyRecord) {
+    throw new Error("Story not found.");
+  }
+
+  if (storyRecord.userId !== sessionUserId) {
+    throw new Error("Only the playlist owner can update this story.");
+  }
+
+  await updateStoryDetails(parsed.storyId, {
+    name: parsed.name,
+    description: parsed.description.trim() || null,
+  });
+
+  revalidatePath(`/user/${parsed.userId}/stories`);
+  revalidatePath(`/user/${parsed.userId}/stories/${parsed.storyId}`);
+
+  return { success: true };
 }
 
 export async function addSongToStory(

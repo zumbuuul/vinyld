@@ -200,6 +200,22 @@ export async function insertStory(
   };
 }
 
+export async function updateStoryDetails(
+  storyId: string,
+  values: {
+    name: string;
+    description: string | null;
+  },
+): Promise<void> {
+  await db
+    .update(story)
+    .set({
+      name: values.name,
+      description: values.description,
+    })
+    .where(eq(story.id, storyId));
+}
+
 export async function getStorySongCount(storyId: string): Promise<number> {
   const [row] = await db
     .select({ count: sql<number>`count(*)::int` })

@@ -49,6 +49,8 @@ async function StoryDetailsView({
 
         <StoryDetailsPanel
           isOwner={isOwner}
+          userId={userId}
+          storyId={storyId}
           ownerName={profile.name}
           story={{
             name: story.name,

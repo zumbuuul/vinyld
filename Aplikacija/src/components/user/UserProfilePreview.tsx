@@ -168,7 +168,12 @@ export function UserProfilePreview({
                   </Button>
                 </>
               ) : (
-                <FollowButton userId={userId} initialIsFollowed={isFollowed} />
+                <FollowButton
+                  userId={userId}
+                  initialIsFollowed={isFollowed}
+                  isAuthenticated={isAuthenticated}
+                  redirectUrl={`/user/${userId}`}
+                />
               )}
             </div>
           </div>

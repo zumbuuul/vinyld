@@ -8,6 +8,7 @@ import {
   getUserStats,
 } from "@/actions/user.actions";
 import { getUserReviews } from "@/actions/review.actions";
+import { getTopStories } from "@/actions/story.actions";
 import { UserProfilePreview } from "@/components/user/UserProfilePreview";
 import { getCurrentSession } from "@/lib/session";
 
@@ -21,37 +22,6 @@ function UserPageFallback() {
   );
 }
 
-function createMockSections() {
-  return {
-    stories: [
-      {
-        id: "late-night-vinyl",
-        name: "Late Night Vinyl",
-        description:
-          "Muted keys, dry drums, and the kind of sequencing that makes midnight feel cinematic.",
-        imageUrl: null,
-        songCount: 18,
-      },
-      {
-        id: "sunday-room-tone",
-        name: "Sunday Room Tone",
-        description:
-          "Warm guitars, brushed percussion, and a slow stretch into the afternoon.",
-        imageUrl: null,
-        songCount: 12,
-      },
-      {
-        id: "small-club-memory",
-        name: "Small Club Memory",
-        description:
-          "A pocket of live cuts and smoky arrangements held together by bass lines that never rush.",
-        imageUrl: null,
-        songCount: 9,
-      },
-    ],
-  };
-}
-
 async function UserPageView({
   params,
 }: {
@@ -59,21 +29,19 @@ async function UserPageView({
 }) {
   const [{ userId }, session] = await Promise.all([params, getCurrentSession()]);
   const isOwnProfile = session?.user.id === userId;
-  const [profile, stats, pendingRequests, isFollowed, reviews] =
+  const [profile, stats, pendingRequests, isFollowed, reviews, stories] =
     await Promise.all([
-    getUserProfile(userId),
-    getUserStats(userId),
-    isOwnProfile ? getPendingRoleRequests(userId) : null,
-    getIsFollowingUser(userId, session?.user.id ?? null),
+      getUserProfile(userId),
+      getUserStats(userId),
+      isOwnProfile ? getPendingRoleRequests(userId) : null,
+      getIsFollowingUser(userId, session?.user.id ?? null),
       getUserReviews(userId, session?.user.id ?? null, 5),
+      getTopStories(userId, 3),
     ]);
 
   if (!profile) {
     notFound();
   }
-
-  const mockSections = createMockSections();
-
   return (
     <UserProfilePreview
       isOwnProfile={isOwnProfile}
@@ -82,6 +50,7 @@ async function UserPageView({
       name={profile.name}
       imageUrl={profile.imageUrl}
       role={profile.role}
+      artistBio={profile.artistBio}
       followers={stats.followerCount}
       following={stats.followingCount}
       reviewCount={stats.reviewCount}
@@ -91,7 +60,7 @@ async function UserPageView({
       pendingRequests={
         pendingRequests ?? { critic: false, artist: false, admin: false }
       }
-      stories={mockSections.stories}
+      stories={stories}
       reviews={reviews}
     />
   );

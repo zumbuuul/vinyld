@@ -7,6 +7,7 @@ export type UserPreferencesRecord = {
   userId: string;
   role: "user" | "critic" | "artist" | "admin";
   profilePictureUrl: string | null;
+  artistBio?: string | null;
   spotifyConnected?: boolean;
 };
 
@@ -15,6 +16,7 @@ export type UserProfileRecord = {
   name: string;
   imageUrl: string | null;
   role: "user" | "critic" | "artist" | "admin";
+  artistBio: string | null;
   spotifyConnected: boolean;
 };
 
@@ -83,6 +85,7 @@ export async function getUserPreferences(
       userId: userPreferences.userId,
       role: userPreferences.role,
       profilePictureUrl: userPreferences.profilePictureUrl,
+      artistBio: userPreferences.artistBio,
       spotifyConnected: userPreferences.spotifyConnected,
       preferenceId: userPreferences.preferenceId,
     })
@@ -107,6 +110,7 @@ export async function getUserPreferences(
     profilePictureUrl: row.profilePictureUrl
       ? String(row.profilePictureUrl)
       : null,
+    artistBio: row.artistBio ? String(row.artistBio) : null,
     spotifyConnected: Boolean(row.spotifyConnected),
   };
 }
@@ -151,6 +155,7 @@ export async function getUserProfileRecord(
     name: baseUser.name,
     imageUrl: preferences?.profilePictureUrl ?? baseUser.image,
     role: preferences?.role ?? "user",
+    artistBio: preferences?.artistBio ?? null,
     spotifyConnected: preferences?.spotifyConnected ?? false,
   };
 }

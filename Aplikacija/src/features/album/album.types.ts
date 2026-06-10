@@ -83,4 +83,7 @@ export type ExistingAlbumReview = {
 export type UserStoryListItem = {
   id: string;
   name: string;
+  imageUrl: string;
+  songCount: number;
+  likeCount: number;
 };

@@ -8,18 +8,14 @@ import {
   type RecentReviewListItem,
 } from "@/components/reviews/RecentReviewsList";
 import { Button } from "@/components/ui/button";
+import { ArtistBioSection } from "@/components/user/ArtistBioSection";
+import { BeginStoryButton } from "@/components/user/BeginStoryButton";
 import { FollowButton } from "@/components/user/FollowButton";
+import { StoryCard } from "@/components/user/StoryCard";
+import type { UserStoryListItem } from "@/features/album/album.types";
 
 type UserRole = "user" | "critic" | "artist" | "admin";
 type RoleRequestKey = "critic" | "artist" | "admin";
-
-type StoryPreview = {
-  id: string;
-  name: string;
-  description: string;
-  imageUrl: string | null;
-  songCount: number;
-};
 
 const ROLE_LABELS: Record<UserRole, string> = {
   user: "Listener",
@@ -68,37 +64,6 @@ function StatBlock({ label, value }: { label: string; value: string }) {
       </p>
       <p className="mt-2 text-2xl font-serif text-[#f5ebe8]">{value}</p>
     </div>
-  );
-}
-
-function StoryCard({ story }: { story: StoryPreview }) {
-  return (
-    <article className="rounded-2xl bg-[#2a2a2a] p-3">
-      <div className="flex gap-4">
-        {story.imageUrl ? (
-          <img
-            src={story.imageUrl}
-            alt={story.name}
-            className="h-20 w-20 shrink-0 rounded-md object-cover"
-          />
-        ) : (
-          <div className="flex h-20 w-20 shrink-0 items-center justify-center rounded-md bg-[#1c1b1b] text-[10px] uppercase tracking-[0.22em] text-[#8f7b74]">
-            Story
-          </div>
-        )}
-        <div className="min-w-0">
-          <h3 className="truncate text-lg font-serif text-[#f5ebe8]">
-            {story.name}
-          </h3>
-          <p className="mt-1 line-clamp-2 text-sm leading-6 text-[#d7b8ad]">
-            {story.description}
-          </p>
-          <p className="mt-3 text-[11px] uppercase tracking-[0.22em] text-[#8f7b74]">
-            {story.songCount} songs
-          </p>
-        </div>
-      </div>
-    </article>
   );
 }
 
@@ -156,6 +121,7 @@ export function UserProfilePreview({
   name,
   imageUrl,
   role,
+  artistBio,
   followers,
   following,
   reviewCount,
@@ -172,6 +138,7 @@ export function UserProfilePreview({
   name: string;
   imageUrl: string | null;
   role: UserRole;
+  artistBio: string | null;
   followers: number;
   following: number;
   reviewCount: number;
@@ -179,7 +146,7 @@ export function UserProfilePreview({
   isFollowed: boolean;
   hasSpotifyConnection: boolean;
   pendingRequests: Record<RoleRequestKey, boolean>;
-  stories: StoryPreview[];
+  stories: UserStoryListItem[];
   reviews: RecentReviewListItem[];
 }) {
   const requestButtons = (["critic", "artist", "admin"] as const).filter(
@@ -243,6 +210,10 @@ export function UserProfilePreview({
           />
         </section>
 
+        {role === "artist" ? (
+          <ArtistBioSection name={name} bio={artistBio} />
+        ) : null}
+
         <div
           className={
             isOwnProfile
@@ -254,11 +225,38 @@ export function UserProfilePreview({
             <NowSpinningPlaceholder />
 
             <section className="rounded-[28px] bg-[#1c1b1b] p-5 sm:p-6">
-              <SectionEyebrow>TopStories</SectionEyebrow>
+              <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+                <div>
+                  <SectionEyebrow>TopStories</SectionEyebrow>
+                </div>
+                <Link href={`/user/${userId}/stories`}>
+                  <Button variant="ghost" className="w-full sm:w-auto">
+                    View all stories
+                  </Button>
+                </Link>
+              </div>
               <div className="mt-4 space-y-3">
-                {stories.map((story) => (
-                  <StoryCard key={story.id} story={story} />
-                ))}
+                {stories.length > 0 ? (
+                  stories.map((story) => (
+                    <StoryCard
+                      key={story.id}
+                      story={story}
+                      href={`/user/${userId}/stories/${story.id}`}
+                    />
+                  ))
+                ) : isOwnProfile ? (
+                  <div className="rounded-2xl bg-[#2a2a2a] p-4">
+                    <p className="mb-4 text-sm leading-6 text-[#d7b8ad]">
+                      You do not have any stories yet. Start the first one and
+                      build out your corner of Vinyld.
+                    </p>
+                    <BeginStoryButton emptyState />
+                  </div>
+                ) : (
+                  <div className="rounded-2xl bg-[#2a2a2a] px-4 py-5 text-sm text-[#d7b8ad]">
+                    This user has not published any stories yet.
+                  </div>
+                )}
               </div>
             </section>
 

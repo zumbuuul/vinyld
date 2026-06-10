@@ -15,7 +15,10 @@ import {
 } from "@/db/queries/albums.queries";
 import {
   getStoriesByUser,
+  getTopStoriesByUser,
+  getTotalStoriesByUser,
   getStoryById,
+  insertStory,
   insertStorySong,
   isSongInStory,
 } from "@/db/queries/stories.queries";
@@ -165,24 +168,70 @@ export async function getUserStories(
 ): Promise<UserStoryListItem[]> {
   const parsedUserId = userIdSchema.parse(userId);
   const parsedPage = pageSchema.parse(page);
-  const sessionUserId = await requireSessionUserId();
-
-  if (sessionUserId !== parsedUserId) {
-    throw new Error("Unauthorized");
-  }
-
   const userRecord = await getUserById(parsedUserId);
 
   if (!userRecord) {
     throw new Error("User not found.");
   }
 
-  const stories = await getStoriesByUser(parsedUserId, parsedPage, 20);
+  const stories = await getStoriesByUser(parsedUserId, parsedPage, 5);
 
   return stories.map((story) => ({
     id: story.id,
     name: story.name,
+    imageUrl: story.imageUrl,
+    songCount: story.songCount,
+    likeCount: story.likeCount,
   }));
+}
+
+export async function getTotalStories(userId: string): Promise<number> {
+  const parsedUserId = userIdSchema.parse(userId);
+  const userRecord = await getUserById(parsedUserId);
+
+  if (!userRecord) {
+    throw new Error("User not found.");
+  }
+
+  return getTotalStoriesByUser(parsedUserId);
+}
+
+export async function getTopStories(
+  userId: string,
+  limit = 3,
+): Promise<UserStoryListItem[]> {
+  const parsedUserId = userIdSchema.parse(userId);
+  const userRecord = await getUserById(parsedUserId);
+
+  if (!userRecord) {
+    throw new Error("User not found.");
+  }
+
+  const stories = await getTopStoriesByUser(parsedUserId, limit);
+
+  return stories.map((story) => ({
+    id: story.id,
+    name: story.name,
+    imageUrl: story.imageUrl,
+    songCount: story.songCount,
+    likeCount: story.likeCount,
+  }));
+}
+
+export async function beginNewStory(): Promise<{ storyId: string; userId: string }> {
+  const sessionUserId = await requireSessionUserId();
+  const createdStory = await insertStory(sessionUserId, {
+    name: "Untitled Story",
+    imageUrl:
+      "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 400 400'%3E%3Crect width='400' height='400' fill='%231c1b1b'/%3E%3Ccircle cx='200' cy='200' r='94' fill='%23ffb59e' fill-opacity='0.16'/%3E%3Ccircle cx='200' cy='200' r='44' fill='%23ff5717' fill-opacity='0.7'/%3E%3C/svg%3E",
+  });
+
+  revalidatePath(`/user/${sessionUserId}/stories`);
+
+  return {
+    storyId: createdStory.id,
+    userId: sessionUserId,
+  };
 }
 
 export async function addSongToStory(

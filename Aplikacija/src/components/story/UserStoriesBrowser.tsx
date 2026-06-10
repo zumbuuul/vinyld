@@ -4,8 +4,8 @@ import { useState, useTransition } from "react";
 
 import { getUserStories } from "@/actions/story.actions";
 import { Button } from "@/components/ui/button";
-import { BeginStoryButton } from "@/components/user/BeginStoryButton";
-import { StoryCard } from "@/components/user/StoryCard";
+import { BeginStoryButton } from "@/components/story/BeginStoryButton";
+import { StoryCard } from "@/components/story/StoryCard";
 import type { UserStoryListItem } from "@/features/album/album.types";
 
 function ChevronButton({
@@ -81,9 +81,7 @@ export function UserStoriesBrowser({
           </p>
         </div>
 
-        {isOwnProfile ? (
-          <BeginStoryButton />
-        ) : null}
+        {isOwnProfile ? <BeginStoryButton /> : null}
       </div>
 
       <div className="mt-6 space-y-3">

@@ -9,9 +9,9 @@ import {
 } from "@/components/reviews/RecentReviewsList";
 import { Button } from "@/components/ui/button";
 import { ArtistBioSection } from "@/components/user/ArtistBioSection";
-import { BeginStoryButton } from "@/components/user/BeginStoryButton";
+import { BeginStoryButton } from "@/components/story/BeginStoryButton";
 import { FollowButton } from "@/components/user/FollowButton";
-import { StoryCard } from "@/components/user/StoryCard";
+import { StoryCard } from "@/components/story/StoryCard";
 import type { UserStoryListItem } from "@/features/album/album.types";
 
 type UserRole = "user" | "critic" | "artist" | "admin";

@@ -4,7 +4,7 @@ import { Suspense } from "react";
 
 import { getTotalStories, getUserStories } from "@/actions/story.actions";
 import { getUserProfile } from "@/actions/user.actions";
-import { UserStoriesBrowser } from "@/components/user/UserStoriesBrowser";
+import { UserStoriesBrowser } from "@/components/story/UserStoriesBrowser";
 import { getCurrentSession } from "@/lib/session";
 
 function StoriesPageFallback() {
@@ -22,7 +22,10 @@ async function UserStoriesView({
 }: {
   params: Promise<{ userId: string }>;
 }) {
-  const [{ userId }, session] = await Promise.all([params, getCurrentSession()]);
+  const [{ userId }, session] = await Promise.all([
+    params,
+    getCurrentSession(),
+  ]);
   const [profile, initialStories, totalStories] = await Promise.all([
     getUserProfile(userId),
     getUserStories(userId, 1),
@@ -38,7 +41,10 @@ async function UserStoriesView({
   return (
     <main className="min-h-screen bg-[#131313] px-4 py-24 text-white sm:px-6 sm:py-28">
       <div className="mx-auto max-w-6xl space-y-6">
-        <Link href={`/user/${userId}`} className="text-sm text-[#ffb59e] transition hover:text-white">
+        <Link
+          href={`/user/${userId}`}
+          className="text-sm text-[#ffb59e] transition hover:text-white"
+        >
           Back to profile
         </Link>
 

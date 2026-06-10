@@ -43,6 +43,7 @@ export type TrendingReviewItem = {
 
 export type PopularStory = {
   id: string;
+  userId: string;
   name: string;
   imageUrl: string | null;
   userName: string;

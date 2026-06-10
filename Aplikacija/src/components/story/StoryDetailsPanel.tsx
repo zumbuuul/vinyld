@@ -1,19 +1,23 @@
 "use client";
 
 import { useState, useTransition } from "react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 
 import { deleteStoryAction, updateStory } from "@/actions/story.actions";
+import { StoryLikeButton } from "@/components/user/StoryLikeButton";
 import { Button } from "@/components/ui/button";
 
 export function StoryDetailsPanel({
   isOwner,
+  isAuthenticated,
   userId,
   storyId,
   story,
   ownerName,
 }: {
   isOwner: boolean;
+  isAuthenticated: boolean;
   userId: string;
   storyId: string;
   story: {
@@ -22,6 +26,7 @@ export function StoryDetailsPanel({
     description: string | null;
     songCount: number;
     likeCount: number;
+    viewerHasLiked?: boolean;
   };
   ownerName: string;
 }) {
@@ -48,7 +53,15 @@ export function StoryDetailsPanel({
             <h1 className="mt-2 text-4xl font-serif leading-none text-[#f5ebe8] sm:text-5xl">
               {story.name}
             </h1>
-            <p className="mt-3 text-sm text-[#a68f87]">by {ownerName}</p>
+            <p className="mt-3 text-sm text-[#a68f87]">
+              by{" "}
+              <Link
+                href={`/user/${userId}`}
+                className="text-[#ffb59e] transition hover:text-white"
+              >
+                {ownerName}
+              </Link>
+            </p>
             <div className="mt-5 flex flex-wrap items-center gap-x-4 gap-y-2 text-[11px] uppercase tracking-[0.22em] text-[#8f7b74]">
               <span>{story.songCount} songs</span>
               <span>{story.likeCount} likes</span>
@@ -57,14 +70,14 @@ export function StoryDetailsPanel({
               {story.description?.trim() ||
                 "This story does not have a description yet."}
             </p>
-
-            <div className="mt-8 rounded-2xl bg-[#2a2a2a] p-4">
-              <p className="text-[11px] uppercase tracking-[0.22em] text-[#8f7b74]">
-                Viewer mode
-              </p>
-              <p className="mt-2 text-sm leading-6 text-[#d7b8ad]">
-                You can browse this story, but only the owner can edit it.
-              </p>
+            <div className="mt-8">
+              <StoryLikeButton
+                storyId={storyId}
+                initialLikeCount={story.likeCount}
+                initiallyLiked={story.viewerHasLiked ?? false}
+                isAuthenticated={isAuthenticated}
+                redirectUrl={`/user/${userId}/stories/${storyId}`}
+              />
             </div>
           </div>
         </div>
@@ -166,7 +179,15 @@ export function StoryDetailsPanel({
             <div className="flex flex-wrap items-center gap-x-4 gap-y-2 text-[11px] uppercase tracking-[0.22em] text-[#8f7b74]">
               <span>{story.songCount} songs</span>
               <span>{story.likeCount} likes</span>
-              <span>by {ownerName}</span>
+              <span>
+                by{" "}
+                <Link
+                  href={`/user/${userId}`}
+                  className="text-[#ffb59e] transition hover:text-white"
+                >
+                  {ownerName}
+                </Link>
+              </span>
             </div>
 
             <label className="block">

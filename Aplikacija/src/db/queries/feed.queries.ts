@@ -4,6 +4,7 @@ import { db } from "@/db/db";
 
 export interface PopularStoryRow {
   id: string;
+  userId: string;
   name: string;
   imageUrl: string | null;
   userName: string;
@@ -54,6 +55,7 @@ export async function getPopularStories(
   const result = await db.execute(sql`
     SELECT
       s.id,
+      s.user_id,
       s.name,
       s.image,
       u.name AS user_name,
@@ -69,6 +71,7 @@ export async function getPopularStories(
 
   const rows = result.rows as Array<{
     id: string;
+    user_id: string;
     name: string;
     image: string | null;
     user_name: string;
@@ -78,6 +81,7 @@ export async function getPopularStories(
 
   return rows.map((row) => ({
     id: String(row.id),
+    userId: String(row.user_id),
     name: String(row.name),
     imageUrl: row.image ? String(row.image) : null,
     userName: String(row.user_name),

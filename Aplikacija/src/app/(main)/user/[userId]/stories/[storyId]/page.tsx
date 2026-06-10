@@ -3,7 +3,10 @@ import { notFound } from "next/navigation";
 import { Suspense } from "react";
 
 import { getStorySongs } from "@/actions/story.actions";
-import { getStoryById } from "@/db/queries/stories.queries";
+import {
+  getStoryById,
+  isStoryLikedByUser,
+} from "@/db/queries/stories.queries";
 import { getUserProfile } from "@/actions/user.actions";
 import { StoryDetailsPanel } from "@/components/user/StoryDetailsPanel";
 import { StorySongList } from "@/components/user/StorySongList";
@@ -39,6 +42,10 @@ async function StoryDetailsView({
   }
 
   const isOwner = session?.user.id === story.userId;
+  const viewerHasLiked =
+    session?.user.id != null
+      ? await isStoryLikedByUser(storyId, session.user.id)
+      : false;
 
   return (
     <main className="min-h-screen bg-[#131313] px-4 py-24 text-white sm:px-6 sm:py-28">
@@ -52,6 +59,7 @@ async function StoryDetailsView({
 
         <StoryDetailsPanel
           isOwner={isOwner}
+          isAuthenticated={Boolean(session)}
           userId={userId}
           storyId={storyId}
           ownerName={profile.name}
@@ -61,6 +69,7 @@ async function StoryDetailsView({
             description: story.description,
             songCount: story.songCount,
             likeCount: story.likeCount,
+            viewerHasLiked,
           }}
         />
 

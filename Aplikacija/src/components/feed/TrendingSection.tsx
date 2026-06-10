@@ -123,7 +123,7 @@ export function TrendingSection({
                     className="rounded-xl bg-[#131313] p-5"
                   >
                     <Link
-                      href={`/story/${story.id}`}
+                      href={`/user/${story.userId}/stories/${story.id}`}
                       className="flex items-center gap-3"
                     >
                       {story.imageUrl ? (

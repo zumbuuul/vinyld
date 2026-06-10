@@ -14,13 +14,16 @@ import {
   linkAlbumGenre,
 } from "@/db/queries/albums.queries";
 import {
+  deleteStoryLike,
   deleteStory,
   deleteStorySong,
   getStoriesByUser,
   getSongsForStory,
+  isStoryLikedByUser,
   getTopStoriesByUser,
   getTotalStoriesByUser,
   getStoryById,
+  insertStoryLike,
   insertStory,
   insertStorySong,
   isSongInStory,
@@ -341,6 +344,42 @@ export async function getStorySongs(storyId: string) {
   }
 
   return getSongsForStory(parsedStoryId);
+}
+
+export async function toggleStoryLike(
+  storyId: string,
+): Promise<{ liked: boolean; likeCount: number }> {
+  const parsedStoryId = storyIdSchema.parse(storyId);
+  const sessionUserId = await requireSessionUserId();
+  const storyRecord = await getStoryById(parsedStoryId);
+
+  if (!storyRecord) {
+    throw new Error("Story not found.");
+  }
+
+  const alreadyLiked = await isStoryLikedByUser(parsedStoryId, sessionUserId);
+
+  if (alreadyLiked) {
+    await deleteStoryLike(parsedStoryId, sessionUserId);
+  } else {
+    await insertStoryLike(parsedStoryId, sessionUserId);
+  }
+
+  const refreshedStory = await getStoryById(parsedStoryId);
+
+  if (!refreshedStory) {
+    throw new Error("Story not found.");
+  }
+
+  revalidatePath(`/user/${storyRecord.userId}/stories/${parsedStoryId}`);
+  revalidatePath(`/user/${storyRecord.userId}/stories`);
+  revalidatePath(`/user/${storyRecord.userId}`);
+  revalidatePath("/");
+
+  return {
+    liked: !alreadyLiked,
+    likeCount: refreshedStory.likeCount,
+  };
 }
 
 export async function removeSongFromStory(

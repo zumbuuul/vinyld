@@ -198,6 +198,35 @@ export async function deleteStorySong(
     .where(and(eq(storySongs.storyId, storyId), eq(storySongs.songId, songId)));
 }
 
+export async function isStoryLikedByUser(
+  storyId: string,
+  userId: string,
+): Promise<boolean> {
+  const [row] = await db
+    .select({ id: storyLikes.id })
+    .from(storyLikes)
+    .where(and(eq(storyLikes.storyId, storyId), eq(storyLikes.userId, userId)))
+    .limit(1);
+
+  return Boolean(row);
+}
+
+export async function insertStoryLike(
+  storyId: string,
+  userId: string,
+): Promise<void> {
+  await db.insert(storyLikes).values({ storyId, userId });
+}
+
+export async function deleteStoryLike(
+  storyId: string,
+  userId: string,
+): Promise<void> {
+  await db
+    .delete(storyLikes)
+    .where(and(eq(storyLikes.storyId, storyId), eq(storyLikes.userId, userId)));
+}
+
 export async function deleteStory(storyId: string): Promise<void> {
   await db.delete(story).where(eq(story.id, storyId));
 }

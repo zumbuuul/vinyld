@@ -7,6 +7,7 @@ import { getRecentReviewsForAlbum } from "@/actions/review.actions";
 import { CriticReviewForm } from "@/components/album/CriticReviewForm";
 import { ReviewForm } from "@/components/album/ReviewForm";
 import { RecentReviewsList } from "@/components/reviews/RecentReviewsList";
+import { AddToPlaylistPopover } from "@/components/story/AddToPlaylistPopover";
 import {
   getCriticAlbumReviewDraft,
   getUserAlbumReviewDraft,
@@ -181,27 +182,38 @@ async function AlbumDetailsView({
                 <ul className="divide-y divide-white/6">
                   {album.tracks.map((track) => (
                     <li key={track.id} className="bg-[#111010]">
-                      <Link
-                        href={`/song/${track.spotifyId}`}
-                        className="flex items-center justify-between gap-4 px-4 py-3 transition hover:bg-[#191717] sm:px-5"
-                      >
-                        <div className="min-w-0">
-                          <p className="truncate text-sm font-medium text-[#f5ebe8]">
-                            <span className="mr-2 text-[#8f7b74]">
-                              {track.trackNumber ?? "?"}.
-                            </span>
-                            {track.name}
-                          </p>
-                          <p className="truncate text-xs text-[#a68f87]">
-                            {track.artistDisplayName ??
-                              album.artistDisplayName ??
-                              "Unknown Artist"}
-                          </p>
-                        </div>
-                        <span className="shrink-0 text-xs text-[#8f7b74]">
-                          {formatTrackDuration(track.durationMs)}
-                        </span>
-                      </Link>
+                      <div className="flex items-center gap-3 px-4 py-3 transition hover:bg-[#191717] sm:px-5">
+                        <Link
+                          href={`/song/${track.spotifyId}`}
+                          className="flex min-w-0 flex-1 items-center justify-between gap-4"
+                        >
+                          <div className="min-w-0">
+                            <p className="truncate text-sm font-medium text-[#f5ebe8]">
+                              <span className="mr-2 text-[#8f7b74]">
+                                {track.trackNumber ?? "?"}.
+                              </span>
+                              {track.name}
+                            </p>
+                            <p className="truncate text-xs text-[#a68f87]">
+                              {track.artistDisplayName ??
+                                album.artistDisplayName ??
+                                "Unknown Artist"}
+                            </p>
+                          </div>
+                          <span className="shrink-0 text-xs text-[#8f7b74]">
+                            {formatTrackDuration(track.durationMs)}
+                          </span>
+                        </Link>
+
+                        {session ? (
+                          <AddToPlaylistPopover
+                            songSpotifyId={track.spotifyId}
+                            triggerLabel="+"
+                            triggerVariant="ghost"
+                            triggerSize="icon"
+                          />
+                        ) : null}
+                      </div>
                     </li>
                   ))}
                 </ul>

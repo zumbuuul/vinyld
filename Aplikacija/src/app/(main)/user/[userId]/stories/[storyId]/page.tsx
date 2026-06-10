@@ -2,9 +2,11 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { Suspense } from "react";
 
+import { getStorySongs } from "@/actions/story.actions";
 import { getStoryById } from "@/db/queries/stories.queries";
 import { getUserProfile } from "@/actions/user.actions";
 import { StoryDetailsPanel } from "@/components/user/StoryDetailsPanel";
+import { StorySongList } from "@/components/user/StorySongList";
 import { getCurrentSession } from "@/lib/session";
 
 function StoryDetailsFallback() {
@@ -26,9 +28,10 @@ async function StoryDetailsView({
     params,
     getCurrentSession(),
   ]);
-  const [story, profile] = await Promise.all([
+  const [story, profile, songs] = await Promise.all([
     getStoryById(storyId),
     getUserProfile(userId),
+    getStorySongs(storyId),
   ]);
 
   if (!story || !profile || story.userId !== userId) {
@@ -60,6 +63,8 @@ async function StoryDetailsView({
             likeCount: story.likeCount,
           }}
         />
+
+        <StorySongList storyId={storyId} songs={songs} isOwner={isOwner} />
       </div>
     </main>
   );

@@ -227,7 +227,7 @@ export function UserProfilePreview({
             <section className="rounded-[28px] bg-[#1c1b1b] p-5 sm:p-6">
               <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
                 <div>
-                  <SectionEyebrow>TopStories</SectionEyebrow>
+                  <SectionEyebrow>Top Stories</SectionEyebrow>
                 </div>
                 <Link href={`/user/${userId}/stories`}>
                   <Button variant="ghost" className="w-full sm:w-auto">

@@ -3,7 +3,7 @@
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 
-import { updateStory } from "@/actions/story.actions";
+import { deleteStoryAction, updateStory } from "@/actions/story.actions";
 import { Button } from "@/components/ui/button";
 
 export function StoryDetailsPanel({
@@ -94,6 +94,31 @@ export function StoryDetailsPanel({
     });
   };
 
+  const handleDeleteStory = () => {
+    const confirmed = window.confirm(
+      "Are you sure you want to delete this story?",
+    );
+
+    if (!confirmed) {
+      return;
+    }
+
+    setError(null);
+
+    startTransition(async () => {
+      try {
+        await deleteStoryAction(userId, storyId);
+        router.push(`/user/${userId}/stories`);
+      } catch (actionError) {
+        setError(
+          actionError instanceof Error
+            ? actionError.message
+            : "Could not delete the story right now.",
+        );
+      }
+    });
+  };
+
   return (
     <section className="rounded-[32px] bg-[radial-gradient(circle_at_top_left,_rgba(255,116,74,0.12),_transparent_35%),#1c1b1b] p-5 sm:p-8">
       <div className="grid gap-6 lg:grid-cols-[260px_minmax(0,1fr)]">
@@ -165,23 +190,23 @@ export function StoryDetailsPanel({
                   Changes will update the story title and bio.
                 </p>
               )}
-              <Button
-                onClick={handleUpdateStory}
-                disabled={isPending}
-                className="w-full bg-[linear-gradient(135deg,#ffb59e,#ff5717)] text-[#521300] hover:opacity-95 sm:w-auto"
-              >
-                {isPending ? "Updating..." : "Update Story"}
-              </Button>
-            </div>
-
-            <div className="rounded-2xl bg-[#2a2a2a] p-4">
-              <p className="text-[11px] uppercase tracking-[0.22em] text-[#8f7b74]">
-                Owner mode
-              </p>
-              <p className="mt-2 text-sm leading-6 text-[#d7b8ad]">
-                Title and bio are now editable and persisted here. Cover image
-                changes stay disabled until Blob storage is set up.
-              </p>
+              <div className="flex w-full flex-col gap-3 sm:w-auto sm:flex-row">
+                <Button
+                  variant="outline"
+                  onClick={handleDeleteStory}
+                  disabled={isPending}
+                  className="w-full border-[#5c4037] text-[#f0d6cd] hover:bg-[#3a1f23] hover:text-white sm:w-auto"
+                >
+                  {isPending ? "Working..." : "Delete Story"}
+                </Button>
+                <Button
+                  onClick={handleUpdateStory}
+                  disabled={isPending}
+                  className="w-full bg-[linear-gradient(135deg,#ffb59e,#ff5717)] text-[#521300] hover:opacity-95 sm:w-auto"
+                >
+                  {isPending ? "Updating..." : "Update Story"}
+                </Button>
+              </div>
             </div>
           </div>
         </div>

@@ -7,6 +7,7 @@ import { getRecentReviewsForSong } from "@/actions/review.actions";
 import { CriticSongReviewForm } from "@/components/song/CriticSongReviewForm";
 import { SongReviewForm } from "@/components/song/SongReviewForm";
 import { RecentReviewsList } from "@/components/reviews/RecentReviewsList";
+import { AddToPlaylistPopover } from "@/components/story/AddToPlaylistPopover";
 import {
   getCriticSongReviewDraft,
   getUserSongReviewDraft,
@@ -131,6 +132,15 @@ async function SongDetailsView({
                     </dd>
                   </div>
                 </dl>
+
+                {session ? (
+                  <div className="mt-5">
+                    <AddToPlaylistPopover
+                      songSpotifyId={song.spotifyId}
+                      triggerLabel="Add to story"
+                    />
+                  </div>
+                ) : null}
               </div>
             </aside>
 

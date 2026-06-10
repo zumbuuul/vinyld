@@ -14,7 +14,10 @@ import {
   linkAlbumGenre,
 } from "@/db/queries/albums.queries";
 import {
+  deleteStory,
+  deleteStorySong,
   getStoriesByUser,
+  getSongsForStory,
   getTopStoriesByUser,
   getTotalStoriesByUser,
   getStoryById,
@@ -192,6 +195,19 @@ export async function getUserStories(
   }));
 }
 
+export async function getOwnStoriesForSelection(): Promise<UserStoryListItem[]> {
+  const sessionUserId = await requireSessionUserId();
+  const stories = await getStoriesByUser(sessionUserId, 1, 100);
+
+  return stories.map((story) => ({
+    id: story.id,
+    name: story.name,
+    imageUrl: story.imageUrl,
+    songCount: story.songCount,
+    likeCount: story.likeCount,
+  }));
+}
+
 export async function getTotalStories(userId: string): Promise<number> {
   const parsedUserId = userIdSchema.parse(userId);
   const userRecord = await getUserById(parsedUserId);
@@ -303,7 +319,8 @@ export async function addSongToStory(
 
     await insertStorySong(parsedStoryId, songRecord.id);
 
-    revalidatePath(`/story/${parsedStoryId}`);
+    revalidatePath(`/user/${sessionUserId}/stories/${parsedStoryId}`);
+    revalidatePath(`/user/${sessionUserId}/stories`);
 
     return ok(null);
   } catch (error) {
@@ -313,4 +330,78 @@ export async function addSongToStory(
 
     return fail("Failed to add song to playlist.");
   }
+}
+
+export async function getStorySongs(storyId: string) {
+  const parsedStoryId = storyIdSchema.parse(storyId);
+  const storyRecord = await getStoryById(parsedStoryId);
+
+  if (!storyRecord) {
+    throw new Error("Story not found.");
+  }
+
+  return getSongsForStory(parsedStoryId);
+}
+
+export async function removeSongFromStory(
+  storyId: string,
+  songId: string,
+): Promise<StoryActionResult<null>> {
+  try {
+    const parsedStoryId = storyIdSchema.parse(storyId);
+    const parsedSongId = z.string().trim().min(1).parse(songId);
+    const sessionUserId = await requireSessionUserId();
+    const storyRecord = await getStoryById(parsedStoryId);
+
+    if (!storyRecord) {
+      return fail("Playlist not found.");
+    }
+
+    if (storyRecord.userId !== sessionUserId) {
+      return fail("Only the playlist owner can remove songs.");
+    }
+
+    await deleteStorySong(parsedStoryId, parsedSongId);
+
+    revalidatePath(`/user/${sessionUserId}/stories/${parsedStoryId}`);
+    revalidatePath(`/user/${sessionUserId}/stories`);
+
+    return ok(null);
+  } catch (error) {
+    if (error instanceof z.ZodError) {
+      return fail(error.issues[0]?.message ?? "Invalid playlist action input.");
+    }
+
+    return fail("Failed to remove song from playlist.");
+  }
+}
+
+export async function deleteStoryAction(
+  userId: string,
+  storyId: string,
+): Promise<{ success: true }> {
+  const parsedUserId = userIdSchema.parse(userId);
+  const parsedStoryId = storyIdSchema.parse(storyId);
+  const sessionUserId = await requireSessionUserId();
+
+  if (sessionUserId !== parsedUserId) {
+    throw new Error("Unauthorized");
+  }
+
+  const storyRecord = await getStoryById(parsedStoryId);
+
+  if (!storyRecord) {
+    throw new Error("Story not found.");
+  }
+
+  if (storyRecord.userId !== sessionUserId) {
+    throw new Error("Only the playlist owner can delete this story.");
+  }
+
+  await deleteStory(parsedStoryId);
+
+  revalidatePath(`/user/${parsedUserId}/stories`);
+  revalidatePath(`/user/${parsedUserId}`);
+
+  return { success: true };
 }

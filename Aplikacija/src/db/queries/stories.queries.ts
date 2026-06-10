@@ -1,7 +1,7 @@
 import { and, asc, desc, eq, sql } from "drizzle-orm";
 
 import { db } from "@/db/db";
-import { story, storyLikes, storySongs } from "@/db/schema";
+import { album, song, story, storyLikes, storySongs } from "@/db/schema";
 
 export interface StoryListItem {
   id: string;
@@ -12,6 +12,18 @@ export interface StoryListItem {
   likeCount: number;
   description: string | null;
   dateCreated: string;
+}
+
+export interface StorySongListItem {
+  id: string;
+  spotifyId: string;
+  name: string;
+  artistDisplayName: string | null;
+  durationMs: number | null;
+  trackNumber: number | null;
+  discNumber: number;
+  albumName: string;
+  albumImageUrl: string | null;
 }
 
 export async function getStoriesByUser(
@@ -177,6 +189,19 @@ export async function insertStorySong(
   await db.insert(storySongs).values({ storyId, songId });
 }
 
+export async function deleteStorySong(
+  storyId: string,
+  songId: string,
+): Promise<void> {
+  await db
+    .delete(storySongs)
+    .where(and(eq(storySongs.storyId, storyId), eq(storySongs.songId, songId)));
+}
+
+export async function deleteStory(storyId: string): Promise<void> {
+  await db.delete(story).where(eq(story.id, storyId));
+}
+
 export async function insertStory(
   userId: string,
   values?: {
@@ -223,4 +248,41 @@ export async function getStorySongCount(storyId: string): Promise<number> {
     .where(eq(storySongs.storyId, storyId));
 
   return Number(row?.count ?? 0);
+}
+
+export async function getSongsForStory(
+  storyId: string,
+): Promise<StorySongListItem[]> {
+  const rows = await db
+    .select({
+      id: song.id,
+      spotifyId: song.spotifyId,
+      name: song.name,
+      artistDisplayName: song.artistDisplayName,
+      durationMs: song.durationMs,
+      trackNumber: song.trackNumber,
+      discNumber: song.discNumber,
+      albumName: album.name,
+      albumImageUrl: album.imageUrl,
+      dateAdded: storySongs.dateAdded,
+    })
+    .from(storySongs)
+    .innerJoin(song, eq(song.id, storySongs.songId))
+    .innerJoin(album, eq(album.id, song.albumId))
+    .where(eq(storySongs.storyId, storyId))
+    .orderBy(desc(storySongs.dateAdded), asc(song.discNumber), asc(song.trackNumber));
+
+  return rows.map((row) => ({
+    id: String(row.id),
+    spotifyId: String(row.spotifyId),
+    name: String(row.name),
+    artistDisplayName: row.artistDisplayName
+      ? String(row.artistDisplayName)
+      : null,
+    durationMs: row.durationMs ?? null,
+    trackNumber: row.trackNumber ?? null,
+    discNumber: Number(row.discNumber),
+    albumName: String(row.albumName),
+    albumImageUrl: row.albumImageUrl ? String(row.albumImageUrl) : null,
+  }));
 }

@@ -4,9 +4,9 @@ import { Suspense } from "react";
 
 import { getAlbumDetails } from "@/actions/album.actions";
 import { getRecentReviewsForAlbum } from "@/actions/review.actions";
-import { AlbumRecentReviews } from "@/components/album/AlbumRecentReviews";
 import { CriticReviewForm } from "@/components/album/CriticReviewForm";
 import { ReviewForm } from "@/components/album/ReviewForm";
+import { RecentReviewsList } from "@/components/reviews/RecentReviewsList";
 import {
   getCriticAlbumReviewDraft,
   getUserAlbumReviewDraft,
@@ -115,7 +115,7 @@ async function AlbumDetailsView({
             </aside>
 
             <div className="space-y-6">
-              {session && role === "user" ? (
+              {session && role !== "critic" ? (
                 <ReviewForm
                   albumId={album.id}
                   albumSpotifyId={album.spotifyId}
@@ -144,10 +144,17 @@ async function AlbumDetailsView({
             </div>
           </div>
 
-          <AlbumRecentReviews
+          <RecentReviewsList
             reviews={recentReviews}
             isAuthenticated={Boolean(session)}
             redirectUrl={`/album/${album.spotifyId}`}
+            reviewSubject="album"
+            eyebrow="Recenzije"
+            title="Skoriji utisci o albumu"
+            emptyText="Jos nema recenzija za ovaj album."
+            countLabel="reviews"
+            likedPositiveLabel="Liked album"
+            likedNegativeLabel="Did not like album"
           />
 
           <section className="mt-6 rounded-[28px] border border-white/6 bg-[#141313]/88 p-5 sm:mt-8 sm:p-6">

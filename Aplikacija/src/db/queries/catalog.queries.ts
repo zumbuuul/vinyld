@@ -1,7 +1,14 @@
 import { and, asc, eq } from "drizzle-orm";
 
 import { db } from "@/db/db";
-import { album, criticAlbumReview, song, userAlbumReview } from "@/db/schema";
+import {
+  album,
+  criticAlbumReview,
+  criticSongReview,
+  song,
+  userAlbumReview,
+  userSongReview,
+} from "@/db/schema";
 import type {
   CatalogAlbumDetails,
   CatalogSongDetails,
@@ -187,6 +194,69 @@ export async function getCriticAlbumReviewDraft(
         eq(criticAlbumReview.albumId, albumId),
         eq(criticAlbumReview.userId, userId),
       ),
+    )
+    .limit(1);
+
+  if (!row) {
+    return null;
+  }
+
+  return {
+    title: String(row.title),
+    rating10: Number(row.rating10),
+    critiqueText: String(row.critiqueText),
+    conclusion: row.conclusion ? String(row.conclusion) : null,
+  };
+}
+
+export async function getUserSongReviewDraft(
+  songId: string,
+  userId: string,
+): Promise<{
+  liked: boolean;
+  rating10: number | null;
+  description: string | null;
+} | null> {
+  const [row] = await db
+    .select({
+      liked: userSongReview.liked,
+      rating10: userSongReview.ocena,
+      description: userSongReview.description,
+    })
+    .from(userSongReview)
+    .where(and(eq(userSongReview.songId, songId), eq(userSongReview.userId, userId)))
+    .limit(1);
+
+  if (!row) {
+    return null;
+  }
+
+  return {
+    liked: Boolean(row.liked),
+    rating10: row.rating10,
+    description: row.description,
+  };
+}
+
+export async function getCriticSongReviewDraft(
+  songId: string,
+  userId: string,
+): Promise<{
+  title: string;
+  rating10: number;
+  critiqueText: string;
+  conclusion: string | null;
+} | null> {
+  const [row] = await db
+    .select({
+      title: criticSongReview.naslov,
+      rating10: criticSongReview.ocena,
+      critiqueText: criticSongReview.tekstKritike,
+      conclusion: criticSongReview.zakljucak,
+    })
+    .from(criticSongReview)
+    .where(
+      and(eq(criticSongReview.songId, songId), eq(criticSongReview.userId, userId)),
     )
     .limit(1);
 

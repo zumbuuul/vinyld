@@ -5,6 +5,8 @@ import { useState, useTransition } from "react";
 import {
   toggleAlbumReviewLike,
   toggleCriticAlbumReviewLike,
+  toggleCriticSongReviewLike,
+  toggleSongReviewLike,
 } from "@/actions/review.actions";
 import { ProtectedAction } from "@/components/ProtectedAction";
 import { Button } from "@/components/ui/button";
@@ -25,6 +27,7 @@ function HeartIcon({ filled }: { filled: boolean }) {
 export function LikeButton({
   reviewId,
   reviewType,
+  reviewSubject = "album",
   initialLikeCount,
   initiallyLiked,
   isAuthenticated,
@@ -32,6 +35,7 @@ export function LikeButton({
 }: {
   reviewId: string;
   reviewType: "user" | "critic";
+  reviewSubject?: "album" | "song";
   initialLikeCount: number;
   initiallyLiked: boolean;
   isAuthenticated: boolean;
@@ -45,9 +49,13 @@ export function LikeButton({
     startTransition(async () => {
       try {
         const result =
-          reviewType === "critic"
-            ? await toggleCriticAlbumReviewLike(reviewId)
-            : await toggleAlbumReviewLike(reviewId);
+          reviewSubject === "song"
+            ? reviewType === "critic"
+              ? await toggleCriticSongReviewLike(reviewId)
+              : await toggleSongReviewLike(reviewId)
+            : reviewType === "critic"
+              ? await toggleCriticAlbumReviewLike(reviewId)
+              : await toggleAlbumReviewLike(reviewId);
         setLiked(result.liked);
         setLikeCount(result.likeCount);
       } catch {

@@ -8,6 +8,7 @@ import { CriticSongReviewForm } from "@/components/song/CriticSongReviewForm";
 import { SongReviewForm } from "@/components/song/SongReviewForm";
 import { RecentReviewsList } from "@/components/reviews/RecentReviewsList";
 import { AddToPlaylistPopover } from "@/components/story/AddToPlaylistPopover";
+import { Skeleton } from "@/components/ui/skeleton";
 import {
   getCriticSongReviewDraft,
   getUserSongReviewDraft,
@@ -18,8 +19,48 @@ import { getCurrentSession } from "@/lib/session";
 function SongPageFallback() {
   return (
     <main className="min-h-screen bg-[#131313] px-4 py-24 text-white sm:px-6 sm:py-28">
-      <div className="mx-auto max-w-7xl rounded-[32px] border border-white/6 bg-[#171515] p-6 sm:p-8">
-        Loading song...
+      <div className="mx-auto max-w-7xl">
+        <div className="rounded-[32px] border border-white/6 bg-[radial-gradient(circle_at_top_left,_rgba(255,116,74,0.14),_transparent_34%),#171515] p-4 shadow-[0_40px_140px_-60px_rgba(0,0,0,0.92)] sm:p-6 lg:p-8">
+          <div className="grid gap-6 lg:grid-cols-[minmax(280px,360px)_minmax(0,1fr)] xl:gap-8">
+            <aside className="space-y-5 rounded-[28px] bg-[linear-gradient(180deg,rgba(255,181,158,0.05),rgba(255,181,158,0)),#1a1717] p-4 sm:p-5">
+              <div className="flex items-center justify-between">
+                <Skeleton className="h-4 w-24 bg-[#1c1b1b]" />
+                <Skeleton className="h-3 w-12 bg-[#1c1b1b]" />
+              </div>
+              <Skeleton className="aspect-square w-full rounded-[24px] bg-[#0f0f0f]" />
+              <div className="space-y-2">
+                <Skeleton className="h-10 w-2/3 bg-[#1c1b1b]" />
+                <Skeleton className="h-6 w-1/2 bg-[#1c1b1b]" />
+              </div>
+              <div className="rounded-[22px] border border-white/6 bg-[#111010] p-4">
+                <Skeleton className="h-3 w-16 bg-[#1c1b1b]" />
+                <div className="mt-4 space-y-3">
+                  <Skeleton className="h-4 w-full bg-[#1c1b1b]" />
+                  <Skeleton className="h-4 w-full bg-[#1c1b1b]" />
+                  <Skeleton className="h-4 w-full bg-[#1c1b1b]" />
+                  <Skeleton className="h-10 w-36 rounded-xl bg-[#1c1b1b]" />
+                </div>
+              </div>
+            </aside>
+
+            <div className="space-y-6">
+              <Skeleton className="h-80 w-full rounded-[28px] bg-[#1c1b1b]" />
+            </div>
+          </div>
+
+          <div className="mt-6 space-y-4 rounded-[28px] border border-white/6 bg-[#141313]/88 p-5 sm:mt-8 sm:p-6">
+            <div className="space-y-2">
+              <Skeleton className="h-3 w-20 bg-[#1c1b1b]" />
+              <Skeleton className="h-8 w-56 bg-[#1c1b1b]" />
+            </div>
+            {Array.from({ length: 3 }, (_, index) => (
+              <Skeleton
+                key={index}
+                className="h-32 w-full rounded-[22px] bg-[#1c1b1b]"
+              />
+            ))}
+          </div>
+        </div>
       </div>
     </main>
   );

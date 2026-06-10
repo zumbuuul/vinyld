@@ -7,13 +7,46 @@ import { getStoryById, isStoryLikedByUser } from "@/db/queries/stories.queries";
 import { getUserProfile } from "@/actions/user.actions";
 import { StoryDetailsPanel } from "@/components/story/StoryDetailsPanel";
 import { StorySongList } from "@/components/story/StorySongList";
+import { Skeleton } from "@/components/ui/skeleton";
 import { getCurrentSession } from "@/lib/session";
 
 function StoryDetailsFallback() {
   return (
     <main className="min-h-screen bg-[#131313] px-4 py-24 text-white sm:px-6 sm:py-28">
-      <div className="mx-auto max-w-5xl rounded-[32px] bg-[#1c1b1b] p-6 sm:p-8">
-        Loading story...
+      <div className="mx-auto max-w-5xl space-y-6">
+        <Skeleton className="h-4 w-28 bg-[#1c1b1b]" />
+
+        <section className="rounded-[32px] bg-[radial-gradient(circle_at_top_left,_rgba(255,116,74,0.12),_transparent_35%),#1c1b1b] p-5 sm:p-8">
+          <div className="grid gap-6 lg:grid-cols-[260px_minmax(0,1fr)]">
+            <div className="space-y-4">
+              <Skeleton className="aspect-square w-full rounded-2xl bg-[#2a2a2a]" />
+              <Skeleton className="h-40 w-full rounded-2xl bg-[#2a2a2a]" />
+            </div>
+            <div className="space-y-5">
+              <Skeleton className="h-3 w-24 bg-[#2a2a2a]" />
+              <Skeleton className="h-14 w-full rounded-2xl bg-[#2a2a2a]" />
+              <Skeleton className="h-4 w-56 bg-[#2a2a2a]" />
+              <Skeleton className="h-40 w-full rounded-2xl bg-[#2a2a2a]" />
+              <div className="flex gap-3">
+                <Skeleton className="h-11 w-32 rounded-xl bg-[#2a2a2a]" />
+                <Skeleton className="h-11 w-40 rounded-xl bg-[#2a2a2a]" />
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <section className="rounded-[28px] bg-[#1c1b1b] p-5 sm:p-6">
+          <div className="space-y-3">
+            <Skeleton className="h-3 w-20 bg-[#2a2a2a]" />
+            <Skeleton className="h-8 w-40 bg-[#2a2a2a]" />
+            {Array.from({ length: 4 }, (_, index) => (
+              <Skeleton
+                key={index}
+                className="h-20 w-full rounded-2xl bg-[#2a2a2a]"
+              />
+            ))}
+          </div>
+        </section>
       </div>
     </main>
   );

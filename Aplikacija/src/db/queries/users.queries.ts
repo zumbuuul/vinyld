@@ -97,9 +97,7 @@ export async function getUserPreferences(
 
   const roleValue = String(row.role);
   const resolvedRole =
-    roleValue === "critic" ||
-    roleValue === "artist" ||
-    roleValue === "admin"
+    roleValue === "critic" || roleValue === "artist" || roleValue === "admin"
       ? roleValue
       : "user";
 
@@ -207,8 +205,12 @@ export async function getUserStatsRecord(
     `),
   ]);
 
-  const reviewCountRow = reviewsRow.rows[0] as { count?: number | string } | undefined;
-  const likeCountRow = likesRow.rows[0] as { count?: number | string } | undefined;
+  const reviewCountRow = reviewsRow.rows[0] as
+    | { count?: number | string }
+    | undefined;
+  const likeCountRow = likesRow.rows[0] as
+    | { count?: number | string }
+    | undefined;
 
   return {
     followerCount: Number(followersRow[0]?.count ?? 0),
@@ -227,17 +229,14 @@ export async function getPendingRoleRequestsRecord(
     })
     .from(roleRequest)
     .where(
-      and(
-        eq(roleRequest.userId, userId),
-        eq(roleRequest.status, "pending"),
-      ),
+      and(eq(roleRequest.userId, userId), eq(roleRequest.status, "pending")),
     );
 
-  const pending = {
+  const pending: PendingRoleRequestsRecord = {
     critic: false,
     artist: false,
     admin: false,
-  } satisfies PendingRoleRequestsRecord;
+  };
 
   for (const row of rows) {
     const requestedRole = String(row.requestedRole);

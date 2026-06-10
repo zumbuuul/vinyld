@@ -1,5 +1,6 @@
 "use server";
 
+import { headers } from "next/headers";
 import {
   getFollowedActivity,
   getPopularStories,

@@ -2,7 +2,6 @@
 
 import { and, count, eq } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
-import { headers } from "next/headers";
 
 import {
   getCriticAlbumReviewDraft,
@@ -37,7 +36,7 @@ import {
   type CriticSongReviewInput,
   type SongReviewInput,
 } from "@/features/album/review.schemas";
-import { auth } from "@/lib/auth";
+import { requireCurrentSession } from "@/lib/session";
 
 export async function getRecentReviewsForAlbum(
   albumId: string,
@@ -66,13 +65,7 @@ export async function saveAlbumReview(input: AlbumReviewInput): Promise<{
   rating10: number;
   description: string;
 }> {
-  const session = await auth.api.getSession({
-    headers: await headers(),
-  });
-
-  if (!session) {
-    throw new Error("Unauthorized");
-  }
+  const session = await requireCurrentSession();
 
   const preferences = await getUserPreferences(session.user.id);
   const role = preferences?.role ?? "user";
@@ -134,13 +127,7 @@ export async function deleteAlbumReview(input: {
   albumId: string;
   albumSpotifyId: string;
 }): Promise<void> {
-  const session = await auth.api.getSession({
-    headers: await headers(),
-  });
-
-  if (!session) {
-    throw new Error("Unauthorized");
-  }
+  const session = await requireCurrentSession();
 
   const preferences = await getUserPreferences(session.user.id);
   const role = preferences?.role ?? "user";
@@ -167,13 +154,7 @@ export async function saveSongReview(input: SongReviewInput): Promise<{
   rating10: number;
   description: string;
 }> {
-  const session = await auth.api.getSession({
-    headers: await headers(),
-  });
-
-  if (!session) {
-    throw new Error("Unauthorized");
-  }
+  const session = await requireCurrentSession();
 
   const preferences = await getUserPreferences(session.user.id);
   const role = preferences?.role ?? "user";
@@ -235,13 +216,7 @@ export async function deleteSongReview(input: {
   songId: string;
   songSpotifyId: string;
 }): Promise<void> {
-  const session = await auth.api.getSession({
-    headers: await headers(),
-  });
-
-  if (!session) {
-    throw new Error("Unauthorized");
-  }
+  const session = await requireCurrentSession();
 
   const preferences = await getUserPreferences(session.user.id);
   const role = preferences?.role ?? "user";
@@ -271,13 +246,7 @@ export async function saveCriticAlbumReview(
   critiqueText: string;
   conclusion: string;
 }> {
-  const session = await auth.api.getSession({
-    headers: await headers(),
-  });
-
-  if (!session) {
-    throw new Error("Unauthorized");
-  }
+  const session = await requireCurrentSession();
 
   const preferences = await getUserPreferences(session.user.id);
 
@@ -344,13 +313,7 @@ export async function deleteCriticAlbumReview(input: {
   albumId: string;
   albumSpotifyId: string;
 }): Promise<void> {
-  const session = await auth.api.getSession({
-    headers: await headers(),
-  });
-
-  if (!session) {
-    throw new Error("Unauthorized");
-  }
+  const session = await requireCurrentSession();
 
   const preferences = await getUserPreferences(session.user.id);
 
@@ -379,13 +342,7 @@ export async function saveCriticSongReview(
   critiqueText: string;
   conclusion: string;
 }> {
-  const session = await auth.api.getSession({
-    headers: await headers(),
-  });
-
-  if (!session) {
-    throw new Error("Unauthorized");
-  }
+  const session = await requireCurrentSession();
 
   const preferences = await getUserPreferences(session.user.id);
 
@@ -451,13 +408,7 @@ export async function deleteCriticSongReview(input: {
   songId: string;
   songSpotifyId: string;
 }): Promise<void> {
-  const session = await auth.api.getSession({
-    headers: await headers(),
-  });
-
-  if (!session) {
-    throw new Error("Unauthorized");
-  }
+  const session = await requireCurrentSession();
 
   const preferences = await getUserPreferences(session.user.id);
 
@@ -482,13 +433,7 @@ export async function toggleAlbumReviewLike(reviewId: string): Promise<{
   liked: boolean;
   likeCount: number;
 }> {
-  const session = await auth.api.getSession({
-    headers: await headers(),
-  });
-
-  if (!session) {
-    throw new Error("Unauthorized");
-  }
+  const session = await requireCurrentSession();
 
   return db.transaction(async (tx) => {
     const [review] = await tx
@@ -543,13 +488,7 @@ export async function toggleCriticAlbumReviewLike(reviewId: string): Promise<{
   liked: boolean;
   likeCount: number;
 }> {
-  const session = await auth.api.getSession({
-    headers: await headers(),
-  });
-
-  if (!session) {
-    throw new Error("Unauthorized");
-  }
+  const session = await requireCurrentSession();
 
   return db.transaction(async (tx) => {
     const [review] = await tx
@@ -604,13 +543,7 @@ export async function toggleSongReviewLike(reviewId: string): Promise<{
   liked: boolean;
   likeCount: number;
 }> {
-  const session = await auth.api.getSession({
-    headers: await headers(),
-  });
-
-  if (!session) {
-    throw new Error("Unauthorized");
-  }
+  const session = await requireCurrentSession();
 
   return db.transaction(async (tx) => {
     const [review] = await tx
@@ -665,13 +598,7 @@ export async function toggleCriticSongReviewLike(reviewId: string): Promise<{
   liked: boolean;
   likeCount: number;
 }> {
-  const session = await auth.api.getSession({
-    headers: await headers(),
-  });
-
-  if (!session) {
-    throw new Error("Unauthorized");
-  }
+  const session = await requireCurrentSession();
 
   return db.transaction(async (tx) => {
     const [review] = await tx

@@ -10,3 +10,19 @@ export const getCurrentSession = cache(async () => {
     headers: await headers(),
   });
 });
+
+export async function requireCurrentSession() {
+  const session = await getCurrentSession();
+
+  if (!session) {
+    throw new Error("Unauthorized");
+  }
+
+  return session;
+}
+
+export async function requireCurrentUserId() {
+  const session = await requireCurrentSession();
+
+  return session.user.id;
+}

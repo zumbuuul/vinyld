@@ -1,7 +1,6 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { headers } from "next/headers";
 import { z } from "zod";
 
 import {
@@ -9,7 +8,7 @@ import {
   updateUserNameRecord,
   updateUserPreferencesRecord,
 } from "@/db/queries/users.queries";
-import { auth } from "@/lib/auth";
+import { requireCurrentSession } from "@/lib/session";
 
 const updateProfileInputSchema = z.object({
   name: z.string().trim().min(1, "Name is required").max(64),
@@ -28,13 +27,7 @@ export async function updateOwnProfile(input: {
   artistBio?: string | null;
   profilePictureUrl?: string | null;
 }): Promise<{ success: true }> {
-  const session = await auth.api.getSession({
-    headers: await headers(),
-  });
-
-  if (!session) {
-    throw new Error("Unauthorized");
-  }
+  const session = await requireCurrentSession();
 
   const parsed = updateProfileInputSchema.parse(input);
   const profile = await getUserProfileRecord(session.user.id);

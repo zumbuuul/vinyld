@@ -1,7 +1,6 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { headers } from "next/headers";
 import { z } from "zod";
 
 import {
@@ -22,7 +21,7 @@ import {
 } from "@/db/queries/stories.queries";
 import { getUserById } from "@/db/queries/users.queries";
 import type { UserStoryListItem } from "@/features/album/album.types";
-import { auth } from "@/lib/auth";
+import { requireCurrentUserId } from "@/lib/session";
 
 const storyIdSchema = z.string().trim().min(1).max(64);
 const songIdSchema = z.string().trim().min(1);
@@ -61,15 +60,7 @@ function fail<T>(error: string): StoryActionResult<T> {
 }
 
 async function requireSessionUserId(): Promise<string> {
-  const session = await auth.api.getSession({
-    headers: await headers(),
-  });
-
-  if (!session) {
-    throw new Error("Unauthorized");
-  }
-
-  return session.user.id;
+  return requireCurrentUserId();
 }
 
 export async function getUserStories(

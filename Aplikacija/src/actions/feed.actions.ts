@@ -1,6 +1,5 @@
 "use server";
 
-import { headers } from "next/headers";
 import {
   getFollowedActivity,
   getPopularStories,
@@ -15,7 +14,7 @@ import type {
   TrendingData,
   TrendingReviewItem,
 } from "@/features/feed/feed.types";
-import { auth } from "@/lib/auth";
+import { requireCurrentSession } from "@/lib/session";
 
 const DEFAULT_RECENT_FEED_PAGE_SIZE = 3;
 
@@ -164,13 +163,7 @@ export async function loadMoreRecentFeed(params: {
   asOf: string;
   limit?: number;
 }): Promise<RecentFeedPage> {
-  const session = await auth.api.getSession({
-    headers: await headers(),
-  });
-
-  if (!session) {
-    throw new Error("Unauthorized");
-  }
+  const session = await requireCurrentSession();
 
   return getRecentFeedPageForUser(session.user.id, {
     limit: params.limit,

@@ -1,7 +1,6 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { headers } from "next/headers";
 import { z } from "zod";
 
 import {
@@ -13,7 +12,7 @@ import {
   type RoleRequestStatus,
 } from "@/db/queries/admin.queries";
 import { getUserPreferences, type RoleRequestKey } from "@/db/queries/users.queries";
-import { auth } from "@/lib/auth";
+import { requireCurrentSession } from "@/lib/session";
 
 const roleRequestFilterSchema = z.object({
   requestedRole: z.enum(["critic", "artist", "admin"]),
@@ -25,13 +24,7 @@ const roleRequestDecisionSchema = z.object({
 });
 
 async function requireAdminUserId(): Promise<string> {
-  const session = await auth.api.getSession({
-    headers: await headers(),
-  });
-
-  if (!session) {
-    throw new Error("Unauthorized");
-  }
+  const session = await requireCurrentSession();
 
   const preferences = await getUserPreferences(session.user.id);
 

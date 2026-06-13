@@ -22,13 +22,6 @@ interface SpotifyArtist {
   name: string;
 }
 
-export interface SpotifyTrack {
-  id: string;
-  name: string;
-  duration_ms: number;
-  track_number: number;
-}
-
 export interface SpotifyAlbum {
   id: string;
   album_type: string;

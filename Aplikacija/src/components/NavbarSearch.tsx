@@ -78,7 +78,7 @@ export function NavbarSearch({
           setIsSearching(false);
         }
       }
-    }, 2000);
+    }, 700);
 
     return () => window.clearTimeout(timeoutId);
   }, [searchQuery]);

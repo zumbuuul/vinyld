@@ -1,6 +1,5 @@
 "use server";
 
-import { headers } from "next/headers";
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
 
@@ -17,7 +16,7 @@ import {
   isUserFollowedByViewer,
   type RoleRequestKey,
 } from "@/db/queries/users.queries";
-import { auth } from "@/lib/auth";
+import { requireCurrentSession } from "@/lib/session";
 
 const roleRequestSchema = z.object({
   requestedRole: z.enum(["critic", "artist", "admin"]),
@@ -52,13 +51,7 @@ export async function getIsFollowingUser(
 }
 
 export async function followUser(userId: string): Promise<{ isFollowed: true }> {
-  const session = await auth.api.getSession({
-    headers: await headers(),
-  });
-
-  if (!session) {
-    throw new Error("Unauthorized");
-  }
+  const session = await requireCurrentSession();
 
   if (session.user.id === userId) {
     throw new Error("You cannot follow yourself");
@@ -78,13 +71,7 @@ export async function followUser(userId: string): Promise<{ isFollowed: true }> 
 export async function unfollowUser(
   userId: string,
 ): Promise<{ isFollowed: false }> {
-  const session = await auth.api.getSession({
-    headers: await headers(),
-  });
-
-  if (!session) {
-    throw new Error("Unauthorized");
-  }
+  const session = await requireCurrentSession();
 
   if (session.user.id === userId) {
     throw new Error("You cannot unfollow yourself");
@@ -101,13 +88,7 @@ export async function submitRoleRequest(input: {
   requestedRole: RoleRequestKey;
   obrazlozenje: string;
 }): Promise<{ success: true }> {
-  const session = await auth.api.getSession({
-    headers: await headers(),
-  });
-
-  if (!session) {
-    throw new Error("Unauthorized");
-  }
+  const session = await requireCurrentSession();
 
   const parsed = roleRequestSchema.parse(input);
   const preferences = await getUserPreferences(session.user.id);
@@ -146,13 +127,7 @@ export async function submitRoleRequest(input: {
 export async function cancelRoleRequest(
   requestedRole: RoleRequestKey,
 ): Promise<{ success: true }> {
-  const session = await auth.api.getSession({
-    headers: await headers(),
-  });
-
-  if (!session) {
-    throw new Error("Unauthorized");
-  }
+  const session = await requireCurrentSession();
 
   const pendingRequest = await getPendingRoleRequestByRole(
     session.user.id,

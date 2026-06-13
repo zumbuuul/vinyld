@@ -211,7 +211,6 @@ export async function getFollowedActivity(
       JOIN "user" u ON u.id = uar.user_id
       JOIN followed_users fu ON fu.followed_id = u.id
       JOIN "Album" a ON a.id = uar.album_id
-      WHERE uar.date_created >= CURRENT_DATE - INTERVAL '1 day'
 
       UNION ALL
 
@@ -259,7 +258,6 @@ export async function getFollowedActivity(
        AND up.role = 'critic'
       JOIN followed_users fu ON fu.followed_id = u.id
       JOIN "Album" a ON a.id = car.album_id
-      WHERE car.date_created >= CURRENT_DATE - INTERVAL '1 day'
 
       UNION ALL
 
@@ -294,7 +292,6 @@ export async function getFollowedActivity(
       FROM "Story" s
       JOIN "user" u ON u.id = s.user_id
       JOIN followed_users fu ON fu.followed_id = u.id
-      WHERE s.date_created >= CURRENT_DATE - INTERVAL '1 day'
 
       UNION ALL
 
@@ -336,7 +333,6 @@ export async function getFollowedActivity(
       JOIN "user" actor ON actor.id = f.following_id
       JOIN followed_users fu ON fu.followed_id = actor.id
       JOIN "user" target ON target.id = f.followed_id
-      WHERE f.date_followed >= NOW() - INTERVAL '24 hours'
     ) activities
     WHERE
       activities.created_at <= ${asOf}::timestamp

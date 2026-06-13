@@ -96,7 +96,12 @@ export function TrendingSection({
                           name={review.userName}
                           size="md"
                         />
-                        <span>{review.userName}</span>
+                        <Link
+                          href={`/user/${review.userId}`}
+                          className="transition hover:text-[#ffb59e]"
+                        >
+                          {review.userName}
+                        </Link>
                       </div>
                       <ScoreDisplay rating10={review.rating10} />
                     </div>

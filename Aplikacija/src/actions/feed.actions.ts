@@ -79,6 +79,7 @@ async function mapRecentReviews(
   return rows.map((row) => ({
     id: row.id,
     reviewType: row.reviewType,
+    userId: row.userId,
     userName: row.userName,
     userImage: row.userImage,
     albumName: row.albumName,

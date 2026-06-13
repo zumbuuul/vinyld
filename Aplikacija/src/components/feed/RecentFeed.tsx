@@ -120,9 +120,12 @@ export function RecentFeed({
                       name={item.actorName}
                     />
                     <div className="leading-tight">
-                      <p className="text-sm font-semibold text-white">
+                      <Link
+                        href={`/user/${item.actorId}`}
+                        className="block text-sm font-semibold text-white transition hover:text-[#ffb59e]"
+                      >
                         {item.actorName}
-                      </p>
+                      </Link>
                       <p className="text-xs uppercase tracking-[0.2em] text-[#e6beb2]">
                         {item.activityLabel}
                       </p>

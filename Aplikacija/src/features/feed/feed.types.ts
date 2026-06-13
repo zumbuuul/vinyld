@@ -29,6 +29,7 @@ export type RecentFeedItem = {
 export type TrendingReviewItem = {
   id: string;
   reviewType: "user" | "critic";
+  userId: string;
   userName: string;
   userImage: string | null;
   albumName: string;

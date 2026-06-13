@@ -11,6 +11,7 @@ import {
 export interface RecentAlbumActivityRow {
   id: string;
   reviewType: "user" | "critic";
+  userId: string;
   userName: string;
   userImage: string | null;
   albumName: string;
@@ -41,6 +42,7 @@ export async function getRecentAlbumActivity(
     .select({
       id: userAlbumReview.id,
       reviewType: sql<"user">`'user'`,
+      userId: user.id,
       userName: user.name,
       userImage: resolvedUserImage,
       albumName: album.name,
@@ -86,6 +88,7 @@ export async function getRecentAlbumActivity(
   return rows.map((row) => ({
     id: String(row.id),
     reviewType: "user",
+    userId: String(row.userId),
     userName: String(row.userName),
     userImage: row.userImage ? String(row.userImage) : null,
     albumName: String(row.albumName),

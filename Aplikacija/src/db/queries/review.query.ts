@@ -23,6 +23,7 @@ export type AlbumReviewListItemRow = {
   targetImageUrl?: string | null;
   targetSecondaryText?: string | null;
   reviewType: "user" | "critic";
+  userId: string;
   userName: string;
   userImage: string | null;
   title: string | null;
@@ -57,6 +58,7 @@ export async function getUserRecentReviews(
       targetImageUrl: album.imageUrl,
       targetSecondaryText: album.artistDisplayName,
       reviewType: sql<"user">`'user'`,
+      userId: user.id,
       userName: user.name,
       userImage: resolvedUserImage,
       title: sql<string | null>`NULL`,
@@ -102,6 +104,7 @@ export async function getUserRecentReviews(
       targetImageUrl: album.imageUrl,
       targetSecondaryText: sql<string | null>`COALESCE(${song.artistDisplayName}, ${album.artistDisplayName}, ${album.name})`,
       reviewType: sql<"user">`'user'`,
+      userId: user.id,
       userName: user.name,
       userImage: resolvedUserImage,
       title: sql<string | null>`NULL`,
@@ -150,6 +153,7 @@ export async function getUserRecentReviews(
       targetImageUrl: album.imageUrl,
       targetSecondaryText: album.artistDisplayName,
       reviewType: sql<"critic">`'critic'`,
+      userId: user.id,
       userName: user.name,
       userImage: resolvedUserImage,
       title: criticAlbumReview.naslov,
@@ -196,6 +200,7 @@ export async function getUserRecentReviews(
       targetImageUrl: album.imageUrl,
       targetSecondaryText: sql<string | null>`COALESCE(${song.artistDisplayName}, ${album.artistDisplayName}, ${album.name})`,
       reviewType: sql<"critic">`'critic'`,
+      userId: user.id,
       userName: user.name,
       userImage: resolvedUserImage,
       title: criticSongReview.naslov,
@@ -247,6 +252,7 @@ export async function getUserRecentReviews(
         ? String(row.targetSecondaryText)
         : null,
       reviewType: row.reviewType,
+      userId: String(row.userId),
       userName: String(row.userName),
       userImage: row.userImage ? String(row.userImage) : null,
       title: row.title ? String(row.title) : null,
@@ -280,6 +286,7 @@ export async function getAlbumRecentReviews(
     .select({
       id: userAlbumReview.id,
       reviewType: sql<"user">`'user'`,
+      userId: user.id,
       userName: user.name,
       userImage: user.image,
       title: sql<string | null>`NULL`,
@@ -303,6 +310,7 @@ export async function getAlbumRecentReviews(
     .where(eq(userAlbumReview.albumId, albumId))
     .groupBy(
       userAlbumReview.id,
+      user.id,
       user.name,
       user.image,
       userAlbumReview.description,
@@ -314,6 +322,7 @@ export async function getAlbumRecentReviews(
     .select({
       id: criticAlbumReview.id,
       reviewType: sql<"critic">`'critic'`,
+      userId: user.id,
       userName: user.name,
       userImage: user.image,
       title: criticAlbumReview.naslov,
@@ -337,6 +346,7 @@ export async function getAlbumRecentReviews(
     .where(eq(criticAlbumReview.albumId, albumId))
     .groupBy(
       criticAlbumReview.id,
+      user.id,
       user.name,
       user.image,
       criticAlbumReview.naslov,
@@ -349,6 +359,7 @@ export async function getAlbumRecentReviews(
     .map((row) => ({
       id: String(row.id),
       reviewType: row.reviewType,
+      userId: String(row.userId),
       userName: String(row.userName),
       userImage: row.userImage ? String(row.userImage) : null,
       title: row.title ? String(row.title) : null,
@@ -381,6 +392,7 @@ export async function getSongRecentReviews(
     .select({
       id: userSongReview.id,
       reviewType: sql<"user">`'user'`,
+      userId: user.id,
       userName: user.name,
       userImage: user.image,
       title: sql<string | null>`NULL`,
@@ -404,6 +416,7 @@ export async function getSongRecentReviews(
     .where(eq(userSongReview.songId, songId))
     .groupBy(
       userSongReview.id,
+      user.id,
       user.name,
       user.image,
       userSongReview.description,
@@ -416,6 +429,7 @@ export async function getSongRecentReviews(
     .select({
       id: criticSongReview.id,
       reviewType: sql<"critic">`'critic'`,
+      userId: user.id,
       userName: user.name,
       userImage: user.image,
       title: criticSongReview.naslov,
@@ -439,6 +453,7 @@ export async function getSongRecentReviews(
     .where(eq(criticSongReview.songId, songId))
     .groupBy(
       criticSongReview.id,
+      user.id,
       user.name,
       user.image,
       criticSongReview.naslov,
@@ -452,6 +467,7 @@ export async function getSongRecentReviews(
     .map((row) => ({
       id: String(row.id),
       reviewType: row.reviewType,
+      userId: String(row.userId),
       userName: String(row.userName),
       userImage: row.userImage ? String(row.userImage) : null,
       title: row.title ? String(row.title) : null,

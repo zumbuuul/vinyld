@@ -14,6 +14,7 @@ export type RecentReviewListItem = {
   targetImageUrl?: string | null;
   targetSecondaryText?: string | null;
   reviewType: "user" | "critic";
+  userId: string;
   userName: string;
   userImage: string | null;
   title: string | null;
@@ -132,9 +133,12 @@ export function RecentReviewsList({
                 <div className="flex items-center gap-3">
                   <UserAvatar imageUrl={review.userImage} name={review.userName} />
                   <div className="min-w-0">
-                    <p className="truncate text-sm font-semibold text-white">
+                    <Link
+                      href={`/user/${review.userId}`}
+                      className="block truncate text-sm font-semibold text-white transition hover:text-[#ffb59e]"
+                    >
                       {review.userName}
-                    </p>
+                    </Link>
                     <p
                       className={`text-[11px] uppercase tracking-[0.22em] ${
                         review.reviewType === "critic"

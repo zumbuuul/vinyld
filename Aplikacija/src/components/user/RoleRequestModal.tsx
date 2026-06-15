@@ -3,10 +3,7 @@
 import { useState, useTransition } from "react";
 import { z } from "zod";
 
-import {
-  cancelRoleRequest,
-  submitRoleRequest,
-} from "@/actions/user.actions";
+import { cancelRoleRequest, submitRoleRequest } from "@/actions/user.actions";
 import { Button } from "@/components/ui/button";
 import type { RoleRequestKey } from "@/db/queries/users.queries";
 
@@ -123,15 +120,6 @@ export function RoleRequestModal({
                     : `Request ${REQUEST_LABELS[role]} access`}
                 </h3>
               </div>
-
-              <Button
-                type="button"
-                variant="ghost"
-                onClick={() => setIsOpen(false)}
-                className="px-3 text-[#d7b8ad]"
-              >
-                Close
-              </Button>
             </div>
 
             {isRequested ? (

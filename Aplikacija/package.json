@@ -6,6 +6,12 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
+    "test": "playwright test",
+    "test:e2e": "playwright test",
+    "test:e2e:ui": "playwright test --ui",
+    "test:e2e:headed": "playwright test --headed",
+    "test:e2e:debug": "playwright test --debug",
+    "test:e2e:browsers": "PLAYWRIGHT_ALL_BROWSERS=1 playwright test tests/e2e/smoke.spec.ts tests/e2e/responsive.spec.ts",
     "lint": "eslint",
     "db:test": "tsx src/lib/test-db.ts",
     "db:seed": "tsx src/lib/seed-fake-data.ts",
@@ -23,6 +29,7 @@
     "react-dom": "19.2.3"
   },
   "devDependencies": {
+    "@playwright/test": "^1.60.0",
     "@tailwindcss/postcss": "^4",
     "@types/node": "^20",
     "@types/react": "^19",

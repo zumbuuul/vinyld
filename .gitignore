@@ -20,6 +20,8 @@
 # testing
 /coverage
 /Aplikacija/coverage
+playwright-report/
+test-results/
 
 # next.js
 /.next/

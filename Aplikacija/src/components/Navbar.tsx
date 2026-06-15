@@ -96,6 +96,7 @@ export default function Navbar({ viewer }: NavbarProps) {
                 onClick={() => setMenuOpen((prev) => !prev)}
                 aria-haspopup="menu"
                 aria-expanded={menuOpen}
+                aria-label="Open user menu"
                 className="flex h-10 w-10 items-center justify-center overflow-hidden rounded-full bg-[#2a2a2a] text-xs font-semibold text-[#ffb59e]"
               >
                 {userImage ? (

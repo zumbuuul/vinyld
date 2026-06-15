@@ -84,6 +84,14 @@ export async function saveAlbumReview(input: AlbumReviewInput): Promise<{
 
   const trimmedDescription = parsed.data.description.trim();
   const rating10 = parsed.data.rating10;
+
+  if (
+    process.env.PLAYWRIGHT_DB_FAILURE_TEST === "1" &&
+    trimmedDescription.includes("__playwright_db_failure__")
+  ) {
+    throw new Error("Could not save review.");
+  }
+
   const existingReview = await getUserAlbumReviewDraft(
     parsed.data.albumId,
     session.user.id,

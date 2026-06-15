@@ -135,37 +135,6 @@ export const song = pgTable(
   ],
 );
 
-export const genre = pgTable(
-  "Genre",
-  {
-    id: uuid().defaultRandom().primaryKey().notNull(),
-    name: varchar({ length: 64 }).notNull(),
-  },
-  (table) => [unique("Genre_name_key").on(table.name)],
-);
-
-export const albumGenres = pgTable(
-  "Album_Genres",
-  {
-    id: uuid().defaultRandom().primaryKey().notNull(),
-    albumId: uuid("album_id").notNull(),
-    genreId: uuid("genre_id").notNull(),
-  },
-  (table) => [
-    foreignKey({
-      columns: [table.albumId],
-      foreignColumns: [album.id],
-      name: "album_has_genres",
-    }).onDelete("cascade"),
-    foreignKey({
-      columns: [table.genreId],
-      foreignColumns: [genre.id],
-      name: "genre_of_album",
-    }).onDelete("cascade"),
-    unique("unique_album_genre").on(table.albumId, table.genreId),
-  ],
-);
-
 export const userAlbumReview = pgTable(
   "User_Album_Review",
   {
@@ -386,6 +355,7 @@ export const userPreferences = pgTable(
       columns: [table.userId, table.preferenceId],
       name: "UserPreferences_pkey",
     }),
+    unique("UserPreferences_user_id_key").on(table.userId),
     unique("UserPreferences_anthem_key").on(table.anthem),
   ],
 );

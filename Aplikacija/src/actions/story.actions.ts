@@ -35,30 +35,6 @@ const updateStoryInputSchema = z.object({
   imageUrl: z.string().trim().url().max(2048).optional().nullable(),
 });
 
-export type StoryActionResult<T = null> =
-  | {
-      success: true;
-      data: T;
-    }
-  | {
-      success: false;
-      error: string;
-    };
-
-function ok<T>(data: T): StoryActionResult<T> {
-  return {
-    success: true,
-    data,
-  };
-}
-
-function fail<T>(error: string): StoryActionResult<T> {
-  return {
-    success: false,
-    error,
-  };
-}
-
 async function requireSessionUserId(): Promise<string> {
   return requireCurrentUserId();
 }
@@ -187,7 +163,7 @@ export async function updateStory(input: {
 export async function addSongToStory(
   storyId: string,
   songId: string,
-): Promise<StoryActionResult<null>> {
+): Promise<void> {
   try {
     const parsedStoryId = storyIdSchema.parse(storyId);
     const parsedSongId = songIdSchema.parse(songId);
@@ -196,31 +172,35 @@ export async function addSongToStory(
     const storyRecord = await getStoryById(parsedStoryId);
 
     if (!storyRecord) {
-      return fail("Playlist not found.");
+      throw new Error("Playlist not found.");
     }
 
     if (storyRecord.userId !== sessionUserId) {
-      return fail("Only the playlist owner can add songs.");
+      throw new Error("Only the playlist owner can add songs.");
     }
 
     const alreadyInStory = await isSongInStory(parsedStoryId, parsedSongId);
 
     if (alreadyInStory) {
-      return fail("Song is already in this playlist.");
+      throw new Error("Song is already in this playlist.");
     }
 
     await insertStorySong(parsedStoryId, parsedSongId);
 
     revalidatePath(`/user/${sessionUserId}/stories/${parsedStoryId}`);
     revalidatePath(`/user/${sessionUserId}/stories`);
-
-    return ok(null);
   } catch (error) {
     if (error instanceof z.ZodError) {
-      return fail(error.issues[0]?.message ?? "Invalid playlist action input.");
+      throw new Error(
+        error.issues[0]?.message ?? "Invalid playlist action input.",
+      );
     }
 
-    return fail("Failed to add song to playlist.");
+    if (error instanceof Error) {
+      throw error;
+    }
+
+    throw new Error("Failed to add song to playlist.");
   }
 }
 
@@ -274,7 +254,7 @@ export async function toggleStoryLike(
 export async function removeSongFromStory(
   storyId: string,
   songId: string,
-): Promise<StoryActionResult<null>> {
+): Promise<void> {
   try {
     const parsedStoryId = storyIdSchema.parse(storyId);
     const parsedSongId = z.string().trim().min(1).parse(songId);
@@ -282,25 +262,29 @@ export async function removeSongFromStory(
     const storyRecord = await getStoryById(parsedStoryId);
 
     if (!storyRecord) {
-      return fail("Playlist not found.");
+      throw new Error("Playlist not found.");
     }
 
     if (storyRecord.userId !== sessionUserId) {
-      return fail("Only the playlist owner can remove songs.");
+      throw new Error("Only the playlist owner can remove songs.");
     }
 
     await deleteStorySong(parsedStoryId, parsedSongId);
 
     revalidatePath(`/user/${sessionUserId}/stories/${parsedStoryId}`);
     revalidatePath(`/user/${sessionUserId}/stories`);
-
-    return ok(null);
   } catch (error) {
     if (error instanceof z.ZodError) {
-      return fail(error.issues[0]?.message ?? "Invalid playlist action input.");
+      throw new Error(
+        error.issues[0]?.message ?? "Invalid playlist action input.",
+      );
     }
 
-    return fail("Failed to remove song from playlist.");
+    if (error instanceof Error) {
+      throw error;
+    }
+
+    throw new Error("Failed to remove song from playlist.");
   }
 }
 

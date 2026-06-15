@@ -12,7 +12,9 @@ export const getCurrentSession = cache(async () => {
 });
 
 export async function requireCurrentSession() {
-  const session = await getCurrentSession();
+  const session = await auth.api.getSession({
+    headers: await headers(),
+  });
 
   if (!session) {
     throw new Error("Unauthorized");

@@ -13,7 +13,6 @@ export type AlbumDetails = {
   releaseYear: number | null;
   artists: string[];
   imageUrl: string | null;
-  genres: string[];
   tracks: AlbumTrack[];
 };
 

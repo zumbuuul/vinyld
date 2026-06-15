@@ -74,16 +74,10 @@ export async function saveAlbumReview(input: AlbumReviewInput): Promise<{
     throw new Error("Critics must use the critique form");
   }
 
-  const parsed = albumReviewInputSchema.safeParse(input);
+  const parsed = albumReviewInputSchema.parse(input);
 
-  if (!parsed.success) {
-    throw new Error(
-      parsed.error.issues[0]?.message ?? "Neispravan unos recenzije",
-    );
-  }
-
-  const trimmedDescription = parsed.data.description.trim();
-  const rating10 = parsed.data.rating10;
+  const trimmedDescription = parsed.description.trim();
+  const rating10 = parsed.rating10;
 
   if (
     process.env.PLAYWRIGHT_DB_FAILURE_TEST === "1" &&
@@ -93,16 +87,16 @@ export async function saveAlbumReview(input: AlbumReviewInput): Promise<{
   }
 
   const existingReview = await getUserAlbumReviewDraft(
-    parsed.data.albumId,
+    parsed.albumId,
     session.user.id,
   );
 
   if (!existingReview) {
     await db.insert(userAlbumReview).values({
-      albumId: parsed.data.albumId,
+      albumId: parsed.albumId,
       userId: session.user.id,
       ocena: rating10,
-      liked: parsed.data.liked,
+      liked: parsed.liked,
       description: trimmedDescription || null,
     });
   } else {
@@ -110,22 +104,22 @@ export async function saveAlbumReview(input: AlbumReviewInput): Promise<{
       .update(userAlbumReview)
       .set({
         ocena: rating10,
-        liked: parsed.data.liked,
+        liked: parsed.liked,
         description: trimmedDescription || null,
       })
       .where(
         and(
-          eq(userAlbumReview.albumId, parsed.data.albumId),
+          eq(userAlbumReview.albumId, parsed.albumId),
           eq(userAlbumReview.userId, session.user.id),
         ),
       );
   }
 
   revalidatePath("/");
-  revalidatePath(`/album/${parsed.data.albumSpotifyId}`);
+  revalidatePath(`/album/${parsed.albumSpotifyId}`);
 
   return {
-    liked: parsed.data.liked,
+    liked: parsed.liked,
     rating10,
     description: trimmedDescription,
   };
@@ -171,27 +165,21 @@ export async function saveSongReview(input: SongReviewInput): Promise<{
     throw new Error("Critics must use the critique form");
   }
 
-  const parsed = songReviewInputSchema.safeParse(input);
+  const parsed = songReviewInputSchema.parse(input);
 
-  if (!parsed.success) {
-    throw new Error(
-      parsed.error.issues[0]?.message ?? "Neispravan unos recenzije",
-    );
-  }
-
-  const trimmedDescription = parsed.data.description.trim();
-  const rating10 = parsed.data.rating10;
+  const trimmedDescription = parsed.description.trim();
+  const rating10 = parsed.rating10;
   const existingReview = await getUserSongReviewDraft(
-    parsed.data.songId,
+    parsed.songId,
     session.user.id,
   );
 
   if (!existingReview) {
     await db.insert(userSongReview).values({
-      songId: parsed.data.songId,
+      songId: parsed.songId,
       userId: session.user.id,
       ocena: rating10,
-      liked: parsed.data.liked,
+      liked: parsed.liked,
       description: trimmedDescription || null,
     });
   } else {
@@ -199,22 +187,22 @@ export async function saveSongReview(input: SongReviewInput): Promise<{
       .update(userSongReview)
       .set({
         ocena: rating10,
-        liked: parsed.data.liked,
+        liked: parsed.liked,
         description: trimmedDescription || null,
       })
       .where(
         and(
-          eq(userSongReview.songId, parsed.data.songId),
+          eq(userSongReview.songId, parsed.songId),
           eq(userSongReview.userId, session.user.id),
         ),
       );
   }
 
   revalidatePath("/");
-  revalidatePath(`/song/${parsed.data.songSpotifyId}`);
+  revalidatePath(`/song/${parsed.songSpotifyId}`);
 
   return {
-    liked: parsed.data.liked,
+    liked: parsed.liked,
     rating10,
     description: trimmedDescription,
   };
@@ -262,27 +250,21 @@ export async function saveCriticAlbumReview(
     throw new Error("Only critics can submit album critiques");
   }
 
-  const parsed = criticAlbumReviewInputSchema.safeParse(input);
+  const parsed = criticAlbumReviewInputSchema.parse(input);
 
-  if (!parsed.success) {
-    throw new Error(
-      parsed.error.issues[0]?.message ?? "Neispravan unos kritike",
-    );
-  }
-
-  const trimmedTitle = parsed.data.title;
-  const trimmedCritiqueText = parsed.data.critiqueText;
-  const trimmedConclusion = parsed.data.conclusion;
-  const rating10 = parsed.data.rating10;
+  const trimmedTitle = parsed.title;
+  const trimmedCritiqueText = parsed.critiqueText;
+  const trimmedConclusion = parsed.conclusion;
+  const rating10 = parsed.rating10;
 
   const existingReview = await getCriticAlbumReviewDraft(
-    parsed.data.albumId,
+    parsed.albumId,
     session.user.id,
   );
 
   if (!existingReview) {
     await db.insert(criticAlbumReview).values({
-      albumId: parsed.data.albumId,
+      albumId: parsed.albumId,
       userId: session.user.id,
       naslov: trimmedTitle,
       ocena: rating10,
@@ -300,14 +282,14 @@ export async function saveCriticAlbumReview(
       })
       .where(
         and(
-          eq(criticAlbumReview.albumId, parsed.data.albumId),
+          eq(criticAlbumReview.albumId, parsed.albumId),
           eq(criticAlbumReview.userId, session.user.id),
         ),
       );
   }
 
   revalidatePath("/");
-  revalidatePath(`/album/${parsed.data.albumSpotifyId}`);
+  revalidatePath(`/album/${parsed.albumSpotifyId}`);
 
   return {
     title: trimmedTitle,
@@ -358,26 +340,20 @@ export async function saveCriticSongReview(
     throw new Error("Only critics can submit song critiques");
   }
 
-  const parsed = criticSongReviewInputSchema.safeParse(input);
+  const parsed = criticSongReviewInputSchema.parse(input);
 
-  if (!parsed.success) {
-    throw new Error(
-      parsed.error.issues[0]?.message ?? "Neispravan unos kritike",
-    );
-  }
-
-  const trimmedTitle = parsed.data.title;
-  const trimmedCritiqueText = parsed.data.critiqueText;
-  const trimmedConclusion = parsed.data.conclusion;
-  const rating10 = parsed.data.rating10;
+  const trimmedTitle = parsed.title;
+  const trimmedCritiqueText = parsed.critiqueText;
+  const trimmedConclusion = parsed.conclusion;
+  const rating10 = parsed.rating10;
   const existingReview = await getCriticSongReviewDraft(
-    parsed.data.songId,
+    parsed.songId,
     session.user.id,
   );
 
   if (!existingReview) {
     await db.insert(criticSongReview).values({
-      songId: parsed.data.songId,
+      songId: parsed.songId,
       userId: session.user.id,
       naslov: trimmedTitle,
       ocena: rating10,
@@ -395,14 +371,14 @@ export async function saveCriticSongReview(
       })
       .where(
         and(
-          eq(criticSongReview.songId, parsed.data.songId),
+          eq(criticSongReview.songId, parsed.songId),
           eq(criticSongReview.userId, session.user.id),
         ),
       );
   }
 
   revalidatePath("/");
-  revalidatePath(`/song/${parsed.data.songSpotifyId}`);
+  revalidatePath(`/song/${parsed.songSpotifyId}`);
 
   return {
     title: trimmedTitle,

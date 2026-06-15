@@ -5,15 +5,12 @@ import {
   account,
   album,
   song,
-  genre,
-  albumGenres,
   userAlbumReview,
   userSongReview,
   criticAlbumReview,
   criticSongReview,
   story,
   storySongs,
-  following,
   userPreferences,
   roleRequest,
   storyLikes,
@@ -54,7 +51,6 @@ export const accountRelations = relations(account, ({ one }) => ({
 
 export const albumRelations = relations(album, ({ many }) => ({
   songs: many(song),
-  albumGenres: many(albumGenres),
   userAlbumReviews: many(userAlbumReview),
   criticAlbumReviews: many(criticAlbumReview),
 }));
@@ -64,15 +60,6 @@ export const songRelations = relations(song, ({ one, many }) => ({
   userSongReviews: many(userSongReview),
   criticSongReviews: many(criticSongReview),
   storySongs: many(storySongs),
-}));
-
-export const genreRelations = relations(genre, ({ many }) => ({
-  albumGenres: many(albumGenres),
-}));
-
-export const albumGenresRelations = relations(albumGenres, ({ one }) => ({
-  album: one(album, { fields: [albumGenres.albumId], references: [album.id] }),
-  genre: one(genre, { fields: [albumGenres.genreId], references: [genre.id] }),
 }));
 
 export const userAlbumReviewRelations = relations(

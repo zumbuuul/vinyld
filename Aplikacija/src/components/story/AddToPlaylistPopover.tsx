@@ -54,14 +54,16 @@ export function AddToPlaylistPopover({
     setError(null);
 
     startSubmitting(async () => {
-      const result = await addSongToStory(storyId, songId);
-
-      if (!result.success) {
-        setError(result.error);
-        return;
+      try {
+        await addSongToStory(storyId, songId);
+        setIsOpen(false);
+      } catch (actionError) {
+        setError(
+          actionError instanceof Error
+            ? actionError.message
+            : "Could not add this song to your story.",
+        );
       }
-
-      setIsOpen(false);
     });
   };
 

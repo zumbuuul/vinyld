@@ -50,16 +50,18 @@ export function StorySongList({
     setPendingSongId(songId);
 
     startTransition(async () => {
-      const result = await removeSongFromStory(storyId, songId);
-
-      if (!result.success) {
-        setError(result.error);
+      try {
+        await removeSongFromStory(storyId, songId);
+        router.refresh();
+      } catch (actionError) {
+        setError(
+          actionError instanceof Error
+            ? actionError.message
+            : "Could not remove this song from the story.",
+        );
+      } finally {
         setPendingSongId(null);
-        return;
       }
-
-      router.refresh();
-      setPendingSongId(null);
     });
   };
 

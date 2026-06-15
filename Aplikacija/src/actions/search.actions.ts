@@ -31,14 +31,7 @@ export async function searchCatalogPage(input: {
   cursor?: number | null;
   filters: SearchFilterState;
 }): Promise<SearchResultsPage> {
-  const parsed = searchInputSchema.safeParse(input);
+  const parsed = searchInputSchema.parse(input);
 
-  if (!parsed.success) {
-    return {
-      items: [],
-      nextCursor: null,
-    };
-  }
-
-  return searchCatalogRecords(parsed.data.filters, parsed.data.cursor);
+  return searchCatalogRecords(parsed.filters, parsed.cursor);
 }

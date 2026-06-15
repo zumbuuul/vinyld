@@ -343,6 +343,9 @@ export const userPreferences = pgTable(
     anthem: varchar({ length: 22 }),
     spotifyConnected: boolean("spotify_connected").default(false).notNull(),
     spotifyAccessToken: text("spotify_access_token"),
+    spotifyAccessTokenExpiresAt: timestamp("spotify_access_token_expires_at", {
+      mode: "string",
+    }),
     spotifyRefreshToken: text("spotify_refresh_token"),
   },
   (table) => [

@@ -43,6 +43,13 @@
       "when": 1781557927786,
       "tag": "0005_unique_user_preferences_user_id",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1781558980570,
+      "tag": "0006_add_spotify_token_expiry",
+      "breakpoints": true
     }
   ]
 }

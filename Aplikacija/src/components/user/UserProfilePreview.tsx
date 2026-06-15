@@ -11,9 +11,12 @@ import { Button } from "@/components/ui/button";
 import { ArtistBioSection } from "@/components/user/ArtistBioSection";
 import { BeginStoryButton } from "@/components/story/BeginStoryButton";
 import { FollowButton } from "@/components/user/FollowButton";
+import { NowSpinningWidget } from "@/components/user/NowSpinningWidget";
 import { RoleRequestModal } from "@/components/user/RoleRequestModal";
+import { SpotifyConnectButton } from "@/components/user/SpotifyConnectButton";
 import { StoryCard } from "@/components/story/StoryCard";
 import type { UserStoryListItem } from "@/features/album/album.types";
+import type { NowSpinningState } from "@/features/user/user.types";
 
 type UserRole = "user" | "critic" | "artist" | "admin";
 type RoleRequestKey = "critic" | "artist" | "admin";
@@ -62,30 +65,6 @@ function StatBlock({ label, value }: { label: string; value: string }) {
   );
 }
 
-function NowSpinningPlaceholder() {
-  return (
-    <section className="rounded-[28px] bg-[#1c1b1b] p-5 sm:p-6">
-      <SectionEyebrow>Now Spinning</SectionEyebrow>
-      <div className="mt-4 flex flex-col gap-4 rounded-2xl bg-[#2a2a2a] p-4 sm:flex-row sm:items-center">
-        <div className="flex h-20 w-20 items-center justify-center rounded-md bg-[linear-gradient(135deg,#ffb59e,#ff5717)] text-[10px] uppercase tracking-[0.28em] text-[#521300]">
-          Live
-        </div>
-        <div className="min-w-0 flex-1">
-          <p className="text-lg font-serif text-[#f5ebe8]">
-            Track title placeholder
-          </p>
-          <p className="mt-1 text-sm text-[#d7b8ad]">
-            Artist name • Album title
-          </p>
-          <div className="mt-4 h-2 rounded-full bg-[#1c1b1b]">
-            <div className="h-2 w-1/3 rounded-full bg-[linear-gradient(135deg,#ffb59e,#ff5717)]" />
-          </div>
-        </div>
-      </div>
-    </section>
-  );
-}
-
 export function UserProfilePreview({
   isOwnProfile,
   isAuthenticated,
@@ -103,6 +82,7 @@ export function UserProfilePreview({
   pendingRequests,
   stories,
   reviews,
+  nowSpinning,
 }: {
   isOwnProfile: boolean;
   isAuthenticated: boolean;
@@ -120,6 +100,7 @@ export function UserProfilePreview({
   pendingRequests: Record<RoleRequestKey, boolean>;
   stories: UserStoryListItem[];
   reviews: RecentReviewListItem[];
+  nowSpinning: NowSpinningState;
 }) {
   const requestButtons = (["critic", "artist", "admin"] as const).filter(
     (requestRole) => role !== requestRole,
@@ -154,18 +135,10 @@ export function UserProfilePreview({
                     </Button>
                   </Link>
 
-                  <Button
-                    variant={hasSpotifyConnection ? "outline" : "default"}
-                    className={
-                      hasSpotifyConnection
-                        ? "w-full border-[#5c4037] text-[#f0d6cd] sm:w-auto"
-                        : "w-full bg-[linear-gradient(135deg,#ffb59e,#ff5717)] text-[#521300] hover:opacity-95 sm:w-auto"
-                    }
-                  >
-                    {hasSpotifyConnection
-                      ? "Spotify Connected"
-                      : "Connect Spotify"}
-                  </Button>
+                  <SpotifyConnectButton
+                    isConnected={hasSpotifyConnection}
+                    returnTo="/"
+                  />
                 </>
               ) : (
                 <FollowButton
@@ -201,7 +174,11 @@ export function UserProfilePreview({
           }
         >
           <div className="space-y-6">
-            <NowSpinningPlaceholder />
+            <NowSpinningWidget
+              userId={userId}
+              initialNowSpinning={nowSpinning}
+              hasSpotifyConnection={hasSpotifyConnection}
+            />
 
             <section className="rounded-[28px] bg-[#1c1b1b] p-5 sm:p-6">
               <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">

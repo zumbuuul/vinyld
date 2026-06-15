@@ -5,12 +5,14 @@ import {
   getIsFollowingUser,
   getPendingRoleRequests,
   getUserProfile,
+  getUserNowSpinning,
   getUserStats,
 } from "@/actions/user.actions";
 import { getUserReviews } from "@/actions/review.actions";
 import { getTopStories } from "@/actions/story.actions";
 import { UserProfilePreview } from "@/components/user/UserProfilePreview";
 import { Skeleton } from "@/components/ui/skeleton";
+import type { NowSpinningState } from "@/features/user/user.types";
 import { getCurrentSession } from "@/lib/session";
 
 function UserPageFallback() {
@@ -60,19 +62,32 @@ async function UserPageView({
 }) {
   const [{ userId }, session] = await Promise.all([params, getCurrentSession()]);
   const isOwnProfile = session?.user.id === userId;
-  const [profile, stats, pendingRequests, isFollowed, reviews, stories] =
+  const profile = await getUserProfile(userId);
+
+  if (!profile) {
+    notFound();
+  }
+
+  const [
+    stats,
+    pendingRequests,
+    isFollowed,
+    reviews,
+    stories,
+    nowSpinning,
+  ] =
     await Promise.all([
-      getUserProfile(userId),
       getUserStats(userId),
       isOwnProfile ? getPendingRoleRequests(userId) : null,
       getIsFollowingUser(userId, session?.user.id ?? null),
       getUserReviews(userId, session?.user.id ?? null, 5),
       getTopStories(userId, 3),
+      profile.spotifyConnected
+        ? getUserNowSpinning(userId)
+        : Promise.resolve(
+            { status: "not_connected" } satisfies NowSpinningState,
+          ),
     ]);
-
-  if (!profile) {
-    notFound();
-  }
   return (
     <UserProfilePreview
       isOwnProfile={isOwnProfile}
@@ -93,6 +108,7 @@ async function UserPageView({
       }
       stories={stories}
       reviews={reviews}
+      nowSpinning={nowSpinning}
     />
   );
 }

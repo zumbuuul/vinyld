@@ -11,6 +11,14 @@ export type UserPreferencesRecord = {
   spotifyConnected?: boolean;
 };
 
+export type SpotifyConnectionRecord = {
+  userId: string;
+  spotifyConnected: boolean;
+  spotifyAccessToken: string | null;
+  spotifyAccessTokenExpiresAt: string | null;
+  spotifyRefreshToken: string | null;
+};
+
 export type UserProfileRecord = {
   id: string;
   name: string;
@@ -181,6 +189,75 @@ export async function updateUserPreferencesRecord(
     .set({
       artistBio: values.artistBio,
       profilePictureUrl: values.profilePictureUrl,
+    })
+    .where(eq(userPreferences.userId, userId));
+}
+
+export async function getSpotifyConnectionRecord(
+  userId: string,
+): Promise<SpotifyConnectionRecord | null> {
+  const [row] = await db
+    .select({
+      userId: userPreferences.userId,
+      spotifyConnected: userPreferences.spotifyConnected,
+      spotifyAccessToken: userPreferences.spotifyAccessToken,
+      spotifyAccessTokenExpiresAt: userPreferences.spotifyAccessTokenExpiresAt,
+      spotifyRefreshToken: userPreferences.spotifyRefreshToken,
+    })
+    .from(userPreferences)
+    .where(eq(userPreferences.userId, userId))
+    .limit(1);
+
+  if (!row) {
+    return null;
+  }
+
+  return {
+    userId: String(row.userId),
+    spotifyConnected: Boolean(row.spotifyConnected),
+    spotifyAccessToken: row.spotifyAccessToken
+      ? String(row.spotifyAccessToken)
+      : null,
+    spotifyAccessTokenExpiresAt: row.spotifyAccessTokenExpiresAt
+      ? String(row.spotifyAccessTokenExpiresAt)
+      : null,
+    spotifyRefreshToken: row.spotifyRefreshToken
+      ? String(row.spotifyRefreshToken)
+      : null,
+  };
+}
+
+export async function updateSpotifyConnectionRecord(
+  userId: string,
+  values: {
+    accessToken: string;
+    accessTokenExpiresAt: string;
+    refreshToken?: string | null;
+  },
+): Promise<void> {
+  await db
+    .update(userPreferences)
+    .set({
+      spotifyConnected: true,
+      spotifyAccessToken: values.accessToken,
+      spotifyAccessTokenExpiresAt: values.accessTokenExpiresAt,
+      ...(values.refreshToken !== undefined
+        ? { spotifyRefreshToken: values.refreshToken }
+        : {}),
+    })
+    .where(eq(userPreferences.userId, userId));
+}
+
+export async function clearSpotifyConnectionRecord(
+  userId: string,
+): Promise<void> {
+  await db
+    .update(userPreferences)
+    .set({
+      spotifyConnected: false,
+      spotifyAccessToken: null,
+      spotifyAccessTokenExpiresAt: null,
+      spotifyRefreshToken: null,
     })
     .where(eq(userPreferences.userId, userId));
 }

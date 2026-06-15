@@ -71,7 +71,7 @@ export function NavbarSearch({
         }
 
         setSearchResults([]);
-        setSearchError("Search is unavailable right now.");
+        setSearchError("Not available");
         setSearchOpen(true);
       } finally {
         if (searchRequestId.current === currentRequestId) {

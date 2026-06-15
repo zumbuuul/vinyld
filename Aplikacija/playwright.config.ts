@@ -17,7 +17,7 @@ export default defineConfig({
     video: "retain-on-failure",
   },
   webServer: {
-    command: `npm run dev -- --hostname localhost --port ${port}`,
+    command: `PLAYWRIGHT_SPOTIFY_STATUS_GUARD_TEST=1 npm run dev -- --hostname localhost --port ${port}`,
     url: baseURL,
     reuseExistingServer: !process.env.CI,
     timeout: 120_000,

@@ -107,6 +107,36 @@ interface TokenCache {
 
 let cachedToken: TokenCache | null = null;
 
+function shouldShowSpotifyUnavailable(status: number) {
+  return status === 404 || status === 420 || status >= 500;
+}
+
+function getPlaywrightSpotifyStatus(params?: Record<string, string | number | undefined>) {
+  if (process.env.PLAYWRIGHT_SPOTIFY_STATUS_GUARD_TEST !== "1") {
+    return null;
+  }
+
+  const query = String(params?.q ?? "");
+
+  if (!query.includes("__playwright_spotify_status_")) {
+    return null;
+  }
+
+  const status = Number(query.match(/__playwright_spotify_status_(\d{3})__/)?.[1]);
+
+  return Number.isFinite(status) ? status : null;
+}
+
+export class SpotifyApiError extends Error {
+  constructor(
+    message: string,
+    readonly status: number,
+  ) {
+    super(message);
+    this.name = "SpotifyApiError";
+  }
+}
+
 async function getSpotifyAccessToken(): Promise<string | null> {
   if (!clientId || !clientSecret) {
     return null;
@@ -153,6 +183,7 @@ export async function getSpotifyAlbum(
 async function spotifyFetch<T>(
   path: string,
   params?: Record<string, string | number | undefined>,
+  options?: { throwOnHttpError?: boolean },
 ): Promise<T | null> {
   const token = await getSpotifyAccessToken();
   if (!token) {
@@ -169,12 +200,30 @@ async function spotifyFetch<T>(
     }
   }
 
+  const playwrightStatus = getPlaywrightSpotifyStatus(params);
+
+  if (
+    playwrightStatus &&
+    options?.throwOnHttpError &&
+    shouldShowSpotifyUnavailable(playwrightStatus)
+  ) {
+    throw new SpotifyApiError("Spotify API request failed.", playwrightStatus);
+  }
+
   const response = await fetch(url, {
     headers: {
       Authorization: `Bearer ${token}`,
     },
     cache: "no-store",
   });
+
+  if (
+    !response.ok &&
+    options?.throwOnHttpError &&
+    shouldShowSpotifyUnavailable(response.status)
+  ) {
+    throw new SpotifyApiError("Spotify API request failed.", response.status);
+  }
 
   if (!response.ok) {
     return null;
@@ -194,7 +243,7 @@ export async function searchSpotifyAlbumsByName(
         type: "album",
         limit,
         market: DEFAULT_MARKET,
-      })
+      }, { throwOnHttpError: true })
     )?.albums ?? null
   );
 }
@@ -210,7 +259,7 @@ export async function searchSpotifyTracksByName(
         type: "track",
         limit,
         market: DEFAULT_MARKET,
-      })
+      }, { throwOnHttpError: true })
     )?.tracks ?? null
   );
 }

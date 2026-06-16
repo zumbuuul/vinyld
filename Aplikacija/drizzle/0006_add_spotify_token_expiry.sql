@@ -1,0 +1,1 @@
+ALTER TABLE "UserPreferences" ADD COLUMN "spotify_access_token_expires_at" timestamp;

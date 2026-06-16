@@ -1,0 +1,55 @@
+{
+  "version": "7",
+  "dialect": "postgresql",
+  "entries": [
+    {
+      "idx": 0,
+      "version": "7",
+      "when": 1773789653719,
+      "tag": "0000_breezy_amphibian",
+      "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1779970914582,
+      "tag": "0001_puzzling_professor_monster",
+      "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1779971004569,
+      "tag": "0002_flawless_swarm",
+      "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1780045382311,
+      "tag": "0003_productive_greymalkin",
+      "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1781557482560,
+      "tag": "0004_remove_genre_tables",
+      "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1781557927786,
+      "tag": "0005_unique_user_preferences_user_id",
+      "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1781558980570,
+      "tag": "0006_add_spotify_token_expiry",
+      "breakpoints": true
+    }
+  ]
+}

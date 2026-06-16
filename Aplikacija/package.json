@@ -1,0 +1,49 @@
+{
+  "name": "vinyld",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "test": "playwright test",
+    "test:e2e": "playwright test",
+    "test:e2e:ui": "playwright test --ui",
+    "test:e2e:headed": "playwright test --headed",
+    "test:e2e:debug": "playwright test --debug",
+    "test:e2e:browsers": "PLAYWRIGHT_ALL_BROWSERS=1 playwright test tests/e2e/smoke.spec.ts tests/e2e/responsive.spec.ts",
+    "k6:version": "k6 version",
+    "test:k6:search": "k6 run tests/k6/search-performance.js",
+    "test:k6:content": "k6 run tests/k6/content-pages-performance.js",
+    "test:k6:availability": "k6 run tests/k6/availability-smoke.js",
+    "test:k6:stability": "k6 run tests/k6/stability-soak.js",
+    "lint": "eslint",
+    "db:test": "tsx src/lib/test-db.ts",
+    "db:seed": "tsx src/lib/seed-fake-data.ts",
+    "db:seed:reset": "tsx src/lib/seed-fake-data.ts --reset"
+  },
+  "dependencies": {
+    "@neondatabase/serverless": "^1.0.2",
+    "@vercel/blob": "^2.4.0",
+    "better-auth": "^1.5.5",
+    "dotenv": "^17.3.1",
+    "drizzle-orm": "^0.45.1",
+    "next": "16.1.6",
+    "postgres": "^3.4.8",
+    "react": "19.2.3",
+    "react-dom": "19.2.3"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.60.0",
+    "@tailwindcss/postcss": "^4",
+    "@types/node": "^20",
+    "@types/react": "^19",
+    "@types/react-dom": "^19",
+    "drizzle-kit": "^0.31.10",
+    "eslint": "^9",
+    "eslint-config-next": "16.1.6",
+    "tailwindcss": "^4",
+    "tsx": "^4.21.0",
+    "typescript": "^5"
+  }
+}

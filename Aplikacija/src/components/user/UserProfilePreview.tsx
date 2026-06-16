@@ -21,11 +21,34 @@ import type { NowSpinningState } from "@/features/user/user.types";
 type UserRole = "user" | "critic" | "artist" | "admin";
 type RoleRequestKey = "critic" | "artist" | "admin";
 
-const ROLE_LABELS: Record<UserRole, string> = {
-  user: "Listener",
-  critic: "Critic",
-  artist: "Artist",
-  admin: "Admin",
+const ROLE_BADGES: Record<
+  UserRole,
+  {
+    emoji: string;
+    label: string;
+    className: string;
+  }
+> = {
+  user: {
+    emoji: "👤",
+    label: "Listener",
+    className: "border-[#4a403d] bg-[#2a2a2a] text-[#f0d6cd]",
+  },
+  critic: {
+    emoji: "✒️",
+    label: "Critic",
+    className: "border-[#57406f] bg-[#2f2141] text-[#d8c2ff]",
+  },
+  artist: {
+    emoji: "🎵",
+    label: "Artist",
+    className: "border-[#5a4228] bg-[#2f261c] text-[#ffd2a3]",
+  },
+  admin: {
+    emoji: "💻",
+    label: "Admin",
+    className: "border-[#69313a] bg-[#3a1f23] text-[#ffb6c1]",
+  },
 };
 
 function SectionEyebrow({ children }: { children: string }) {
@@ -37,19 +60,16 @@ function SectionEyebrow({ children }: { children: string }) {
 }
 
 function RoleBadge({ role }: { role: UserRole }) {
-  const tones: Record<UserRole, string> = {
-    user: "bg-[#2a2a2a] text-[#f0d6cd]",
-    critic: "bg-[#2f2141] text-[#d8c2ff]",
-    artist: "bg-[#2f261c] text-[#ffd2a3]",
-    admin: "bg-[#3a1f23] text-[#ffb6c1]",
-  };
+  const badge = ROLE_BADGES[role];
 
   return (
     <div
-      className={`inline-flex items-center gap-2 rounded-full px-3 py-1.5 text-[11px] uppercase tracking-[0.22em] ${tones[role]}`}
+      className={`inline-flex items-center gap-2 rounded-full border px-3 py-1.5 text-[11px] font-medium uppercase tracking-[0.22em] ${badge.className}`}
     >
-      <span className="h-2 w-2 rounded-full bg-current opacity-80" />
-      {ROLE_LABELS[role]}
+      <span aria-hidden="true" className="text-base leading-none">
+        {badge.emoji}
+      </span>
+      <span>{badge.label}</span>
     </div>
   );
 }
@@ -232,25 +252,40 @@ export function UserProfilePreview({
 
           {isOwnProfile ? (
             <aside className="space-y-6">
-              <section className="rounded-[28px] bg-[#1c1b1b] p-5 sm:p-6">
-                <SectionEyebrow>Role Requests</SectionEyebrow>
-                <p className="mt-3 text-sm leading-6 text-[#d7b8ad]">
-                  Ask for elevated access when your profile is ready for a wider
-                  role in the community.
-                </p>
-                <div className="mt-5 flex flex-col gap-3">
-                  {requestButtons.map((requestRole) => (
-                    <RoleRequestModal
-                      key={requestRole}
-                      role={requestRole}
-                      requested={pendingRequests[requestRole]}
-                      disabled={
-                        hasAnyPendingRequest && !pendingRequests[requestRole]
-                      }
-                    />
-                  ))}
-                </div>
-              </section>
+              {role === "admin" ? (
+                <section className="rounded-[28px] bg-[#1c1b1b] p-5 sm:p-6">
+                  <SectionEyebrow>Admin Access</SectionEyebrow>
+                  <p className="mt-3 text-sm leading-6 text-[#d7b8ad]">
+                    Review role requests and manage privileged access from the
+                    admin panel.
+                  </p>
+                  <Link href="/admin" className="mt-5 block">
+                    <Button className="w-full bg-[linear-gradient(135deg,#ffb59e,#ff5717)] text-[#521300] hover:opacity-95">
+                      Open Admin Panel
+                    </Button>
+                  </Link>
+                </section>
+              ) : (
+                <section className="rounded-[28px] bg-[#1c1b1b] p-5 sm:p-6">
+                  <SectionEyebrow>Role Requests</SectionEyebrow>
+                  <p className="mt-3 text-sm leading-6 text-[#d7b8ad]">
+                    Ask for elevated access when your profile is ready for a
+                    wider role in the community.
+                  </p>
+                  <div className="mt-5 flex flex-col gap-3">
+                    {requestButtons.map((requestRole) => (
+                      <RoleRequestModal
+                        key={requestRole}
+                        role={requestRole}
+                        requested={pendingRequests[requestRole]}
+                        disabled={
+                          hasAnyPendingRequest && !pendingRequests[requestRole]
+                        }
+                      />
+                    ))}
+                  </div>
+                </section>
+              )}
             </aside>
           ) : null}
         </div>

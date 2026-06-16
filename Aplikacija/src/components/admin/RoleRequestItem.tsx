@@ -5,6 +5,7 @@ import { useState, useTransition } from "react";
 import {
   approveRoleRequest,
   declineRoleRequest,
+  revertApprovedRoleRequest,
 } from "@/actions/admin.actions";
 import { Button } from "@/components/ui/button";
 import type { AdminRoleRequestRow } from "@/db/queries/admin.queries";
@@ -53,6 +54,23 @@ export function RoleRequestItem({
     });
   };
 
+  const handleRevert = () => {
+    setError(null);
+
+    startTransition(async () => {
+      try {
+        await revertApprovedRoleRequest(request.id);
+        onResolved(request.id);
+      } catch (actionError) {
+        setError(
+          actionError instanceof Error
+            ? actionError.message
+            : "Could not revert this request right now.",
+        );
+      }
+    });
+  };
+
   return (
     <article className="rounded-2xl bg-[#2a2a2a] p-4">
       <div className="flex items-start justify-between gap-4">
@@ -96,6 +114,21 @@ export function RoleRequestItem({
               {isPending ? "Working..." : "Decline"}
             </Button>
           </div>
+        </div>
+      ) : null}
+
+      {request.status === "approved" ? (
+        <div className="mt-4 flex flex-col gap-3">
+          {error ? <p className="text-sm text-[#ffb59e]">{error}</p> : null}
+          <Button
+            type="button"
+            variant="outline"
+            onClick={handleRevert}
+            disabled={isPending}
+            className="w-full border-[#7a2f22] text-[#ffb59e]"
+          >
+            {isPending ? "Working..." : "REVERT"}
+          </Button>
         </div>
       ) : null}
     </article>

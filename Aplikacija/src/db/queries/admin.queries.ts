@@ -108,3 +108,27 @@ export async function updateUserRoleRecord(
     })
     .where(eq(userPreferences.userId, userId));
 }
+
+export async function revertApprovedRoleRequestRecord(values: {
+  requestId: string;
+  userId: string;
+}): Promise<void> {
+  await db.transaction(async (tx) => {
+    await tx
+      .update(userPreferences)
+      .set({
+        role: "user",
+      })
+      .where(eq(userPreferences.userId, values.userId));
+
+    await tx
+      .delete(roleRequest)
+      .where(
+        and(
+          eq(roleRequest.id, values.requestId),
+          eq(roleRequest.userId, values.userId),
+          eq(roleRequest.status, "approved"),
+        ),
+      );
+  });
+}

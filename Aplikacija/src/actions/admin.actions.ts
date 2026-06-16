@@ -6,6 +6,7 @@ import { z } from "zod";
 import {
   getRoleRequestById,
   getRoleRequestsByTypeAndStatus,
+  revertApprovedRoleRequestRecord,
   updateRoleRequestDecision,
   updateUserRoleRecord,
   type AdminRoleRequestRow,
@@ -96,6 +97,32 @@ export async function declineRoleRequest(
     requestId: parsed.requestId,
     status: "rejected",
     resolvedBy: adminUserId,
+  });
+
+  revalidatePath("/admin");
+  revalidatePath(`/user/${requestRecord.userId}`);
+
+  return { success: true };
+}
+
+export async function revertApprovedRoleRequest(
+  requestId: string,
+): Promise<{ success: true }> {
+  await requireAdminUserId();
+  const parsed = roleRequestDecisionSchema.parse({ requestId });
+  const requestRecord = await getRoleRequestById(parsed.requestId);
+
+  if (!requestRecord) {
+    throw new Error("Role request not found.");
+  }
+
+  if (requestRecord.status !== "approved") {
+    throw new Error("Only approved requests can be reverted.");
+  }
+
+  await revertApprovedRoleRequestRecord({
+    requestId: parsed.requestId,
+    userId: requestRecord.userId,
   });
 
   revalidatePath("/admin");

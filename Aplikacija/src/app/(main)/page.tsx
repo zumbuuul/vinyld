@@ -65,13 +65,8 @@ async function SpotifyRootCallback({
   }
 }
 
-async function PersonalizedFeedSection() {
-  const session = await getCurrentSession();
-  if (!session) {
-    return <HeroSection />;
-  }
-
-  const recentFeedPage = await getRecentFeedPageForUser(session.user.id, {
+async function PersonalizedFeedSection({ userId }: { userId: string }) {
+  const recentFeedPage = await getRecentFeedPageForUser(userId, {
     limit: 3,
   });
 
@@ -87,29 +82,32 @@ async function PersonalizedFeedSection() {
   );
 }
 
-async function TrendingSectionSlot() {
-  const session = await getCurrentSession();
-  const trending = await getTrendingContent(3, session?.user.id ?? null);
+async function TrendingSectionSlot({ userId }: { userId: string | null }) {
+  const trending = await getTrendingContent(3, userId);
 
   return (
-    <TrendingSection
-      trending={trending}
-      isAuthenticated={Boolean(session)}
-    />
+    <TrendingSection trending={trending} isAuthenticated={Boolean(userId)} />
   );
 }
 
-export default function FeedPage({ searchParams }: FeedPageProps) {
+export default async function FeedPage({ searchParams }: FeedPageProps) {
+  const session = await getCurrentSession();
+  const userId = session?.user.id ?? null;
+
   return (
     <div className="relative bg-[#131313] text-white">
+      {!userId ? <HeroSection /> : null}
       <Suspense fallback={null}>
         <SpotifyRootCallback searchParams={searchParams} />
       </Suspense>
-      <Suspense fallback={<RecentFeedSkeleton />}>
-        <PersonalizedFeedSection />
-      </Suspense>
+
+      {userId ? (
+        <Suspense fallback={<RecentFeedSkeleton />}>
+          <PersonalizedFeedSection userId={userId} />
+        </Suspense>
+      ) : null}
       <Suspense fallback={<TrendingSectionSkeleton />}>
-        <TrendingSectionSlot />
+        <TrendingSectionSlot userId={userId} />
       </Suspense>
     </div>
   );
